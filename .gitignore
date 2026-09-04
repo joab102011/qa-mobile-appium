@@ -9,6 +9,7 @@ apps/*.ipa
 allure-results/
 allure-report/
 capturas/
+!capturas/.gitkeep
 screenshots/
 logs/
 *.log
