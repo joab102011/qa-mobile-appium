@@ -1,0 +1,20 @@
+[
+  {
+    "cenario": "login_valido",
+    "email": "bob@example.com",
+    "senha": "bobspassword",
+    "esperado": "sucesso"
+  },
+  {
+    "cenario": "senha_invalida",
+    "email": "bob@example.com",
+    "senha": "senha_errada",
+    "esperado": "erro"
+  },
+  {
+    "cenario": "email_invalido",
+    "email": "naoexiste@qa.com",
+    "senha": "bobspassword",
+    "esperado": "erro"
+  }
+]
