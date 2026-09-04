@@ -1,0 +1,17 @@
+node_modules/
+.env
+.env.*
+!.env.example
+apps/*.apk
+apps/*.zip
+apps/*.ipa
+!apps/.gitkeep
+allure-results/
+allure-report/
+capturas/
+screenshots/
+logs/
+*.log
+.DS_Store
+Thumbs.db
+errorShots/
