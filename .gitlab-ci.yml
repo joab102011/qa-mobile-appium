@@ -1,0 +1,23 @@
+stages:
+  - testar
+
+testar_android_browserstack:
+  image: node:20
+  stage: testar
+  script:
+    - npm ci
+    - npm run testar:android:bs
+  artifacts:
+    when: always
+    paths:
+      - allure-results/
+      - capturas/
+    expire_in: 7 days
+  rules:
+    - if: $BROWSERSTACK_USERNAME
+      when: on_success
+    - when: manual
+      allow_failure: true
+
+# Emulador Android no runner SaaS e pesado — CI oficial usa BrowserStack.
+# Execucao local: npm run testar:android:local
