@@ -1,0 +1,44 @@
+# =============================================================================
+# GitHub Actions — INATIVO por padrao
+# =============================================================================
+# Espelho da estrategia do .gitlab-ci.yml (BrowserStack + artefatos always).
+# Nao dispara em push/PR. Emulador no runner SaaS e pesado — CI oficial em cloud.
+# Para ativar: descomente eventos em `on:`, remova `if: false` e configure secrets
+# BROWSERSTACK_*. Detalhes: README.md (secao Estrategia de CI).
+# =============================================================================
+
+name: CI Mobile Appium
+
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+  # pull_request:
+  #   branches: [main]
+
+jobs:
+  testar_android_browserstack:
+    if: false # CI inativo — remova esta linha ao ativar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Instalar dependencias
+        run: npm ci
+      - name: Executar suite Android no BrowserStack
+        run: npm run testar:android:bs
+        env:
+          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+          BROWSERSTACK_APP_ID: ${{ secrets.BROWSERSTACK_APP_ID }}
+      - name: Publicar artefatos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorios-mobile
+          path: |
+            allure-results/
+            capturas/
+          retention-days: 7

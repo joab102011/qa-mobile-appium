@@ -12,7 +12,7 @@ Automação de testes **mobile nativos** com **Appium 2** (motor) + **WebdriverI
 | Padrão | Page Object (`paginas/`) |
 | Relatórios | Allure + screenshots em falha |
 | Cloud | BrowserStack |
-| CI/CD | GitLab CI |
+| CI/CD | GitLab CI + GitHub Actions (preparados, **inativos**) |
 
 ## Pré-requisitos (Android local)
 
@@ -73,9 +73,27 @@ npm run relatorio:allure
 
 Ver [`docs/casos-de-teste.md`](docs/casos-de-teste.md) — login, cadastro, formulários, navegação e erros. Data-driven em `dados/usuarios-login.json`.
 
-## CI/CD GitLab
+## Estratégia de CI (GitLab + GitHub Actions)
 
-Arquivo [`.gitlab-ci.yml`](.gitlab-ci.yml) dispara `testar:android:bs` quando as variáveis BrowserStack estão definidas. Artefatos publicados **sempre**.
+O enunciado do Case Mobile pede **GitLab CI**. O repositório também traz GitHub Actions como espelho, porque a entrega pública ficou no GitHub.
+
+| Arquivo | Plataforma | Papel |
+|---------|------------|--------|
+| [`.gitlab-ci.yml`](.gitlab-ci.yml) | GitLab | Pipeline exigida pelo desafio |
+| [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | GitHub Actions | Mesmo job (BrowserStack + artefatos) |
+
+**Estado atual: CI inativo** nos dois YAMLs — sem pipeline automática. A suíte foi validada no **emulador Android local** (`npm run testar:android:local`). Emulador no runner SaaS é pesado; o caminho de CI planejado é **BrowserStack** (secrets no projeto).
+
+### O que a pipeline faz (quando ativada)
+
+1. Job `testar_android_browserstack` — `npm ci` + `npm run testar:android:bs`
+2. Artefatos **sempre**: `allure-results/`, `capturas/`
+3. Secrets necessários: `BROWSERSTACK_USERNAME`, `BROWSERSTACK_ACCESS_KEY`, `BROWSERSTACK_APP_ID`
+
+### Como ativar
+
+- **GitLab:** em `.gitlab-ci.yml`, troque `workflow.rules` de `when: never` por regras de branch/MR e configure as variáveis BrowserStack.
+- **GitHub:** em `.github/workflows/ci.yml`, descomente `push`/`pull_request`, remova o `if: false` e cadastre os secrets no repositório.
 
 ## Estrutura
 
@@ -89,7 +107,8 @@ qa-mobile-appium/
 ├── scripts/           # Download do app
 ├── docs/
 ├── wdio.*.conf.js
-└── .gitlab-ci.yml
+├── .gitlab-ci.yml     # CI GitLab (inativo)
+└── .github/workflows/ # CI GitHub Actions (inativo)
 ```
 
 ## Limitações

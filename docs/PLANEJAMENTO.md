@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Atender o Case Técnico de **Automação de Testes Mobile** com 10 cenários no native-demo-app (WebdriverIO), padrão Page Object, Appium 2, evidências (screenshot + Allure) e GitLab CI.
+Atender o Case Técnico de **Automação de Testes Mobile** com 10 cenários no native-demo-app (WebdriverIO), padrão Page Object, Appium 2, evidências (screenshot + Allure) e CI preparado (GitLab + GitHub Actions, inativos).
 
 ## Decisão de stack
 
@@ -12,7 +12,7 @@ Atender o Case Técnico de **Automação de Testes Mobile** com 10 cenários no 
 | Cliente/runner | WebdriverIO + Mocha + Chai | Stack sugerida no PDF |
 | Relatório | Allure | Resumo, screenshots de falha, ambiente |
 | Cloud | BrowserStack | Devices reais (Android); iOS configurado |
-| CI | GitLab CI | Obrigatório no enunciado |
+| CI | GitLab CI + GitHub Actions (inativos) | GitLab obrigatório no enunciado; Actions como espelho |
 
 Arquitetura:
 
@@ -47,9 +47,17 @@ Cada cenario nas specs usa `dado()`, `quando()` e `entao()` (`utilitarios/passos
 
 ## CI/CD
 
+Dois YAMLs espelhados, **inativos por padrão** (ver README — Estratégia de CI):
+
+| Arquivo | Uso |
+|---------|-----|
+| `.gitlab-ci.yml` | Exigência do enunciado Mobile |
+| `.github/workflows/ci.yml` | Espelho no GitHub (remoto público atual) |
+
 - Job principal: `testar_android_browserstack` (quando secrets existirem)
 - Artifacts always: `allure-results/`, `capturas/`
-- Emulador no SaaS não é o caminho oficial (pesado) — documentado no README
+- Emulador no SaaS não é o caminho oficial (pesado) — validação local + CI em cloud
+- Ativação documentada no README
 
 ## Evolução (fases de commit)
 
@@ -61,5 +69,5 @@ Cada cenario nas specs usa `dado()`, `quando()` e `entao()` (`utilitarios/passos
 6. Erros + data-driven
 7. Screenshots/Allure
 8. BrowserStack
-9. GitLab CI
+9. GitLab CI + GitHub Actions (espelho, inativos)
 10. Documentação final
