@@ -29,8 +29,27 @@ class CadastroPagina extends PaginaBase {
     return $('//*[@resource-id="android:id/button1"]');
   }
 
+  async formularioCadastroVisivel() {
+    return this.campoRepetirSenha.isDisplayed().catch(() => false);
+  }
+
+  /**
+   * Abre a aba Sign up sem travar 15s se o formulario ja estiver aberto.
+   */
   async abrirAbaCadastro() {
-    await this.tocar(this.abaCadastro);
+    if (await this.formularioCadastroVisivel()) {
+      return;
+    }
+    const aba = this.abaCadastro;
+    if (await aba.isExisting().catch(() => false)) {
+      try {
+        await aba.waitForDisplayed({ timeout: 8000 });
+        await aba.click();
+      } catch (e) {
+        // tenta seguir se o campo ja estiver visivel
+      }
+    }
+    await this.aguardarExibir(this.campoRepetirSenha, 12000);
   }
 
   async realizarCadastro(email, senha, repetirSenha = senha) {
@@ -38,6 +57,11 @@ class CadastroPagina extends PaginaBase {
     await this.preencher(this.campoEmail, email);
     await this.preencher(this.campoSenha, senha);
     await this.preencher(this.campoRepetirSenha, repetirSenha);
+    try {
+      await driver.hideKeyboard();
+    } catch (e) {
+      await driver.back().catch(() => undefined);
+    }
     await this.tocar(this.botaoCadastrar);
   }
 
@@ -47,7 +71,7 @@ class CadastroPagina extends PaginaBase {
   }
 
   async fecharAlerta() {
-    if (await this.botaoOkAlerta.isDisplayed()) {
+    if (await this.botaoOkAlerta.isDisplayed().catch(() => false)) {
       await this.tocar(this.botaoOkAlerta);
     }
   }

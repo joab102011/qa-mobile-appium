@@ -1,6 +1,13 @@
 # qa-mobile-appium
 
-Automação de testes **mobile nativos** com **Appium 2** (motor) + **WebdriverIO** (cliente) + Mocha + Chai no [native-demo-app](https://github.com/webdriverio/native-demo-app).
+Automação de testes **mobile nativos** com **Appium 2** + **WebdriverIO** + Mocha + Chai no [native-demo-app](https://github.com/webdriverio/native-demo-app).
+
+## Ideia em uma frase
+
+Fluxo **gratuito e local**: Node.js + SDK Android + emulador **`WdioDemo_API34` criado dentro deste repositório** (pasta `emulador/avd`).  
+**Não usa AVD de outros projetos.** BrowserStack é opcional (nuvem, em geral pago/trial).
+
+Os YAMLs de CI (GitLab + GitHub, **inativos**) usam BrowserStack quando ativados — sem emulador no runner.
 
 ## Stack
 
@@ -9,113 +16,132 @@ Automação de testes **mobile nativos** com **Appium 2** (motor) + **WebdriverI
 | Motor | Appium 2 + UiAutomator2 |
 | Runner | WebdriverIO |
 | Testes | Mocha + Chai |
-| Padrão | Page Object (`paginas/`) |
-| Relatórios | Allure + screenshots em falha |
-| Cloud | BrowserStack |
-| CI/CD | GitLab CI + GitHub Actions (preparados, **inativos**) |
+| Emulador local | **`WdioDemo_API34`** (deste projeto, em `emulador/avd`) |
+| Cloud (opcional) | BrowserStack |
+| CI/CD | GitLab CI + GitHub Actions (prontos, **inativos**) |
 
-## Pré-requisitos (Android local)
+---
 
-1. Node.js 18+
-2. JDK 11+
-3. Android Studio com emulador (AVD) ligado
-4. Variáveis `ANDROID_HOME` / `JAVA_HOME` configuradas
+## 1) O que instalar no PC (uma vez)
 
-## Setup
+| Ferramenta | Para quê |
+|------------|----------|
+| **Node.js 20 LTS** | [nodejs.org](https://nodejs.org) |
+| **Android SDK** | `platform-tools`, `emulator` e system-image `android-34;google_apis;x86_64` |
+| Variável **`ANDROID_HOME`** | Caminho do SDK (ex.: `D:\Android\Sdk`) |
 
-```bash
-npm ci
-npm run baixar:app
+```powershell
+$env:ANDROID_HOME = "D:\Android\Sdk"   # ajuste se o seu SDK estiver em outro lugar
+$env:PATH = "$env:ANDROID_HOME\platform-tools;$env:ANDROID_HOME\emulator;$env:PATH"
+node -v
 ```
 
-O script baixa o APK oficial do native-demo-app para `apps/android.wdio.native.app.apk`.
+> O AVD **`WdioDemo_API34`** é criado **pelo projeto** (`npm run emulador:criar`). Não use emulador de outro app/repositório.
 
-## Como executar
+---
 
-### Android local (Appium)
+## 2) Preparar (uma vez)
 
-Com o emulador aberto:
+Na pasta `qa-mobile-appium`:
 
 ```bash
+npm run preparar
+```
+
+Isso:
+
+1. Instala dependências (`npm ci`)  
+2. Baixa o APK do demo  
+3. Cria o emulador **`WdioDemo_API34`** em `emulador/avd/` (só deste repo)
+
+---
+
+## 3) Como executar (local / grátis)
+
+### A) Todas as specs **com UI** (você vê o emulador)
+
+```bash
+npm run emulador:iniciar
 npm run testar:android:local
 ```
 
-### BrowserStack (Android)
+> `testar:android:local` roda **cada arquivo de spec em processo separado** (mais estável em um único emulador).
 
-Configure no CI ou no shell:
-
-- `BROWSERSTACK_USERNAME`
-- `BROWSERSTACK_ACCESS_KEY`
-- `BROWSERSTACK_APP_ID` (após upload do APK)
+### B) Somente **uma** spec (com UI)
 
 ```bash
+npm run emulador:iniciar
+npm run testar:android:login
+```
+
+| Spec | Comando |
+|------|---------|
+| Login | `npm run testar:android:login` |
+| Cadastro | `npm run testar:android:cadastro` |
+| Formulários | `npm run testar:android:formularios` |
+| Navegação | `npm run testar:android:navegacao` |
+| Erros | `npm run testar:android:erros` |
+
+### C) Headless + **uma** spec (emulador sem janela)
+
+```bash
+npm run emulador:iniciar:headless
+npm run testar:android:login
+```
+
+### Resumo
+
+| Objetivo | Comandos |
+|----------|----------|
+| Preparar projeto + AVD deste repo | `npm run preparar` |
+| Subir emulador **do projeto** (UI) | `npm run emulador:iniciar` |
+| Subir emulador **do projeto** (headless) | `npm run emulador:iniciar:headless` |
+| Todas as specs | `npm run testar:android:local` |
+| Uma spec | `npm run testar:android:login` (etc.) |
+
+---
+
+## 4) BrowserStack (opcional / nuvem)
+
+Em geral **pago** (ou trial). Não é necessário se o emulador local do projeto estiver ok.
+
+```powershell
+$env:BROWSERSTACK_USERNAME = "..."
+$env:BROWSERSTACK_ACCESS_KEY = "..."
+$env:BROWSERSTACK_APP_ID = "bs://..."
 npm run testar:android:bs
 ```
 
-### BrowserStack (iOS)
+---
 
-```bash
-npm run testar:ios:bs
-```
+## 5) CI (GitLab + GitHub Actions) — inativos
 
-> O build iOS do demo app é para **simulador**. Em Windows local o iOS não roda; use cloud ou Mac.
+Pipelines auto-suficientes com Node + `npm run preparar` + BrowserStack (quando secrets existirem).  
+**Inativos** por padrão — ver comentários nos YAMLs e como ativar abaixo.
 
-## Relatórios
+| Arquivo | Plataforma |
+|---------|------------|
+| [`.gitlab-ci.yml`](.gitlab-ci.yml) | GitLab |
+| [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | GitHub Actions |
 
-- Screenshots de falha em `capturas/`
-- Allure results em `allure-results/`
+**Ativar:** secrets `BROWSERSTACK_*` + liberar `workflow.rules` / remover `if: false`.
 
-```bash
-npm run relatorio:allure
-```
-
-## Cenários (10)
-
-Ver [`docs/casos-de-teste.md`](docs/casos-de-teste.md) — login, cadastro, formulários, navegação e erros. Data-driven em `dados/usuarios-login.json`.
-
-## Estratégia de CI (GitLab + GitHub Actions)
-
-O enunciado do Case Mobile pede **GitLab CI**. O repositório também traz GitHub Actions como espelho, porque a entrega pública ficou no GitHub.
-
-| Arquivo | Plataforma | Papel |
-|---------|------------|--------|
-| [`.gitlab-ci.yml`](.gitlab-ci.yml) | GitLab | Pipeline exigida pelo desafio |
-| [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | GitHub Actions | Mesmo job (BrowserStack + artefatos) |
-
-**Estado atual: CI inativo** nos dois YAMLs — sem pipeline automática. A suíte foi validada no **emulador Android local** (`npm run testar:android:local`). Emulador no runner SaaS é pesado; o caminho de CI planejado é **BrowserStack** (secrets no projeto).
-
-### O que a pipeline faz (quando ativada)
-
-1. Job `testar_android_browserstack` — `npm ci` + `npm run testar:android:bs`
-2. Artefatos **sempre**: `allure-results/`, `capturas/`
-3. Secrets necessários: `BROWSERSTACK_USERNAME`, `BROWSERSTACK_ACCESS_KEY`, `BROWSERSTACK_APP_ID`
-
-### Como ativar
-
-- **GitLab:** em `.gitlab-ci.yml`, troque `workflow.rules` de `when: never` por regras de branch/MR e configure as variáveis BrowserStack.
-- **GitHub:** em `.github/workflows/ci.yml`, descomente `push`/`pull_request`, remova o `if: false` e cadastre os secrets no repositório.
+---
 
 ## Estrutura
 
 ```
 qa-mobile-appium/
-├── paginas/           # Page Objects
-├── testes/            # 10 cenários
-├── dados/             # JSON data-driven
-├── utilitarios/       # Gestos e Allure
-├── apps/              # APK (não versionado)
-├── scripts/           # Download do app
-├── docs/
-├── wdio.*.conf.js
-├── .gitlab-ci.yml     # CI GitLab (inativo)
-└── .github/workflows/ # CI GitHub Actions (inativo)
+├── emulador/avd/          # AVD WdioDemo_API34 (deste projeto)
+├── paginas/
+├── testes/
+├── scripts/
+│   ├── criar-emulador-projeto.js
+│   ├── iniciar-emulador-projeto.js
+│   └── baixar-app.js
+├── wdio.android.local.conf.js
+└── ...
 ```
-
-## Limitações
-
-- iOS local exige macOS (não disponível neste ambiente Windows)
-- CI usa BrowserStack em vez de emulador no runner SaaS
-- Selectors baseados em accessibility id do demo app (`~Login`, `~Forms`, etc.)
 
 ## Documentação
 

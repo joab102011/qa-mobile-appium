@@ -8,66 +8,40 @@ Atender o Case Técnico de **Automação de Testes Mobile** com 10 cenários no 
 
 | Camada | Escolha | Motivo |
 |--------|---------|--------|
-| Motor | **Appium 2** + UiAutomator2 | Exigência do desafio; automação nativa |
-| Cliente/runner | WebdriverIO + Mocha + Chai | Stack sugerida no PDF |
-| Relatório | Allure | Resumo, screenshots de falha, ambiente |
-| Cloud | BrowserStack | Devices reais (Android); iOS configurado |
-| CI | GitLab CI + GitHub Actions (inativos) | GitLab obrigatório no enunciado; Actions como espelho |
+| Motor | **Appium 2** + UiAutomator2 | Exigência do desafio |
+| Cliente/runner | WebdriverIO + Mocha + Chai | Stack do enunciado |
+| Emulador local | **`WdioDemo_API34` em `emulador/avd`** | AVD **deste** repositório; gratuito; sem AVD de outros projetos |
+| Cloud (opcional) | BrowserStack | Alternativa paga/trial; usada nos YAMLs de CI |
+| CI | GitLab + GitHub Actions (inativos) | GitLab no enunciado; Actions como espelho |
 
-Arquitetura:
+Arquitetura local:
 
 ```
-testes (Mocha/Chai)
-   → paginas (Page Object)
-      → WebdriverIO
-         → Appium Server / BrowserStack Hub
-            → Emulador Android ou device cloud
+testes → paginas → WDIO → Appium → emulador WdioDemo_API34 (pasta do repo)
 ```
-
-## Organização de pastas
-
-| Pasta | Responsabilidade |
-|-------|------------------|
-| `paginas/` | Page Objects (locators + ações) |
-| `testes/` | 10 cenários |
-| `dados/` | JSON data-driven |
-| `utilitarios/` | Gestos e Allure |
-| `apps/` | APK (baixado via script, não versionado) |
-| `docs/` | Planejamento e matriz |
 
 ## Ambientes
 
-1. **Android local (Windows):** Appium via `@wdio/appium-service` + emulador
-2. **BrowserStack Android:** hub `hub.browserstack.com` + `BROWSERSTACK_*`
-3. **BrowserStack iOS:** config pronta; execução depende do plano/upload do `.zip` de simulador
+1. **Local (oficial grátis):** `npm run preparar` → `npm run emulador:iniciar` → `npm run testar:android:local`  
+   Emulador exclusivo: **`WdioDemo_API34`** em `emulador/avd` (não usa AVD de outros projetos).
+2. **BrowserStack (opcional/pago):** secrets `BROWSERSTACK_*` + `npm run testar:android:bs`
+3. **CI:** YAMLs inativos; job BrowserStack auto-suficiente com Node 20
 
 ## Padrao DADO / QUANDO / ENTAO
 
-Cada cenario nas specs usa `dado()`, `quando()` e `entao()` (`utilitarios/passos.bdd.js`) com steps no Allure — mesmo padrao BDD da suite de API e dos desafios anteriores.
+Specs usam `dado()` / `quando()` / `entao()` (`utilitarios/passos.bdd.js`).
 
 ## CI/CD
 
-Dois YAMLs espelhados, **inativos por padrão** (ver README — Estratégia de CI):
-
 | Arquivo | Uso |
 |---------|-----|
-| `.gitlab-ci.yml` | Exigência do enunciado Mobile |
-| `.github/workflows/ci.yml` | Espelho no GitHub (remoto público atual) |
+| `.gitlab-ci.yml` | Exigência Mobile |
+| `.github/workflows/ci.yml` | Espelho GitHub |
 
-- Job principal: `testar_android_browserstack` (quando secrets existirem)
-- Artifacts always: `allure-results/`, `capturas/`
-- Emulador no SaaS não é o caminho oficial (pesado) — validação local + CI em cloud
-- Ativação documentada no README
+Inativos por padrão. Ativação no README.
 
-## Evolução (fases de commit)
+## Evolução
 
-1. Scaffold Appium/WDIO
-2. Config Android local + script APK
-3. Page Objects
-4. Cenários login/cadastro
-5. Formulários e navegação
-6. Erros + data-driven
-7. Screenshots/Allure
-8. BrowserStack
-9. GitLab CI + GitHub Actions (espelho, inativos)
-10. Documentação final
+1. Scaffold → Page Objects → 10 cenários → Allure  
+2. Emulador **do projeto** (`WdioDemo_API34`) + scripts  
+3. BrowserStack opcional + CI inativa  

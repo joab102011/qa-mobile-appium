@@ -5,6 +5,7 @@ const { dado, quando, entao } = require('../utilitarios/passos.bdd');
 
 describe('Formularios', () => {
   beforeEach(async () => {
+    await inicioPagina.fecharAlertaSeExistir();
     await inicioPagina.irParaFormularios();
   });
 

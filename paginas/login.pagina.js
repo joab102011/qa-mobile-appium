@@ -22,11 +22,15 @@ class LoginPagina extends PaginaBase {
   }
 
   get mensagemErroSenha() {
-    return $('android=new UiSelector().textContains("password")');
+    return $('android=new UiSelector().textContains("at least 8 characters")');
   }
 
   get mensagemErroEmail() {
-    return $('android=new UiSelector().textContains("email")');
+    return $('android=new UiSelector().textContains("valid email")');
+  }
+
+  get mensagemErroGenerica() {
+    return $('android=new UiSelector().textContains("Please enter")');
   }
 
   get alertaSucesso() {
@@ -37,10 +41,37 @@ class LoginPagina extends PaginaBase {
     return $('//*[@resource-id="android:id/button1"]');
   }
 
+  async formularioVisivel() {
+    return this.campoEmail.isDisplayed().catch(() => false);
+  }
+
+  /**
+   * Garante a aba Login do formulario. Nao espera 15s se o form ja estiver aberto
+   * (apos alerta de sucesso o ~button-login-container pode nao aparecer).
+   */
   async abrirAbaLogin() {
-    if (await this.abaLoginFormulario.isExisting()) {
-      await this.tocar(this.abaLoginFormulario);
+    if (await this.formularioVisivel()) {
+      return;
     }
+    const aba = this.abaLoginFormulario;
+    if (await aba.isExisting().catch(() => false)) {
+      try {
+        await aba.waitForDisplayed({ timeout: 5000 });
+        await aba.click();
+      } catch (e) {
+        // segue: talvez o form ja esteja acessivel
+      }
+    }
+    await this.aguardarExibir(this.campoEmail, 10000);
+  }
+
+  async limparCampos() {
+    await this.aguardarExibir(this.campoEmail);
+    await this.campoEmail.click();
+    await this.campoEmail.clearValue();
+    await this.campoSenha.click();
+    await this.campoSenha.clearValue();
+    await this.esconderTeclado();
   }
 
   async realizarLogin(email, senha) {
@@ -61,20 +92,28 @@ class LoginPagina extends PaginaBase {
     return this.alertaSucesso.getText();
   }
 
+  async alertaVisivel() {
+    return this.alertaSucesso.isDisplayed().catch(() => false);
+  }
+
   async fecharAlerta() {
     if (await this.botaoOkAlerta.isDisplayed().catch(() => false)) {
       await this.tocar(this.botaoOkAlerta);
+      await browser.pause(400);
     }
   }
 
   async fecharAlertaSeExistir() {
-    try {
-      if (await this.alertaSucesso.isDisplayed().catch(() => false)) {
-        await this.fecharAlerta();
-        await browser.pause(400);
+    for (let i = 0; i < 3; i += 1) {
+      try {
+        if (await this.alertaVisivel()) {
+          await this.fecharAlerta();
+        } else {
+          break;
+        }
+      } catch (e) {
+        break;
       }
-    } catch (e) {
-      // sem alerta aberto
     }
   }
 
@@ -84,6 +123,20 @@ class LoginPagina extends PaginaBase {
     } catch (e) {
       await driver.back().catch(() => undefined);
     }
+  }
+
+  async houveErroValidacao() {
+    const checks = [
+      this.mensagemErroSenha,
+      this.mensagemErroEmail,
+      this.mensagemErroGenerica,
+    ];
+    for (const el of checks) {
+      if (await el.isDisplayed().catch(() => false)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 

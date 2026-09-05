@@ -7,7 +7,7 @@ exports.config = {
   runner: 'local',
   specs: ['./testes/**/*.spec.js'],
   maxInstances: 1,
-  logLevel: 'info',
+  logLevel: 'warn',
   bail: 0,
   waitforTimeout: 15000,
   connectionRetryTimeout: 120000,
@@ -27,6 +27,17 @@ exports.config = {
   mochaOpts: {
     ui: 'bdd',
     timeout: 180000,
+  },
+  /**
+   * Garante app em primeiro plano no inicio de cada arquivo de spec.
+   */
+  before: async function () {
+    try {
+      await driver.activateApp('com.wdiodemoapp');
+    } catch (e) {
+      // app pode ja estar ativo
+    }
+    await browser.pause(1500);
   },
   /**
    * Captura tela automaticamente em falha.

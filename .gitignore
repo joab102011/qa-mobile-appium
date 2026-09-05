@@ -16,3 +16,11 @@ logs/
 .DS_Store
 Thumbs.db
 errorShots/
+# Emulador do projeto (artefatos pesados; config.ini fica versionado)
+emulador/udid-ativo.txt
+emulador/avd/**/*.img
+emulador/avd/**/*.qcow2
+emulador/avd/**/snapshots/
+emulador/avd/**/cache.img*
+emulador/avd/**/userdata-qemu.img*
+emulador/avd/**/sdcard.img*

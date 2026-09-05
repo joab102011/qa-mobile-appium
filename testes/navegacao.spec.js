@@ -5,6 +5,11 @@ const { deslizarParaEsquerda } = require('../utilitarios/gestos');
 const { dado, quando, entao } = require('../utilitarios/passos.bdd');
 
 describe('Navegacao', () => {
+  beforeEach(async () => {
+    await inicioPagina.fecharAlertaSeExistir();
+    await inicioPagina.ativarApp();
+  });
+
   it('MOB-07 | deve navegar entre abas Inicio, Formularios e Swipe', async () => {
     await dado('que o menu inferior do aplicativo esta disponivel', async () => {
       await inicioPagina.aguardarMenuInferior();

@@ -1,10 +1,9 @@
 # =============================================================================
 # GitHub Actions — INATIVO por padrao
 # =============================================================================
-# Espelho da estrategia do .gitlab-ci.yml (BrowserStack + artefatos always).
-# Nao dispara em push/PR. Emulador no runner SaaS e pesado — CI oficial em cloud.
-# Para ativar: descomente eventos em `on:`, remova `if: false` e configure secrets
-# BROWSERSTACK_*. Detalhes: README.md (secao Estrategia de CI).
+# Pipeline auto-suficiente: setup-node 20 + npm run preparar + BrowserStack.
+# Sem Android Studio, sem emulador no runner. Secrets: BROWSERSTACK_*.
+# Espelho: .gitlab-ci.yml | Ativar: descomentar push/PR e remover if: false.
 # =============================================================================
 
 name: CI Mobile Appium
@@ -25,8 +24,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Instalar dependencias
-        run: npm ci
+          cache: npm
+      - name: Preparar projeto (deps + APK)
+        run: npm run preparar
       - name: Executar suite Android no BrowserStack
         run: npm run testar:android:bs
         env:

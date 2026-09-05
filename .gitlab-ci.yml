@@ -1,10 +1,9 @@
 # =============================================================================
 # GitLab CI — INATIVO por padrao
 # =============================================================================
-# Pipeline espelhada no GitHub Actions (.github/workflows/ci.yml).
-# Nao cria pipeline automatica. Job oficial: BrowserStack (secrets no projeto).
-# Emulador no runner SaaS e pesado — execucao local: npm run testar:android:local
-# Para ativar: altere workflow.rules. Detalhes: README.md (Estrategia de CI).
+# Pipeline auto-suficiente: imagem Node 20 + npm run preparar + BrowserStack.
+# Sem Android Studio, sem emulador no runner. Secrets: BROWSERSTACK_*.
+# Espelho: .github/workflows/ci.yml | Ativar: trocar workflow.rules (README).
 # =============================================================================
 
 workflow:
@@ -17,8 +16,17 @@ stages:
 testar_android_browserstack:
   image: node:20
   stage: testar
+  variables:
+    npm_config_cache: "$CI_PROJECT_DIR/.npm"
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - .npm/
+      - node_modules/
+  before_script:
+    - node -v && npm -v
+    - npm run preparar
   script:
-    - npm ci
     - npm run testar:android:bs
   artifacts:
     when: always

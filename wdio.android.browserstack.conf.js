@@ -19,7 +19,7 @@ exports.config = {
         deviceName: process.env.BS_DEVICE_ANDROID || 'Samsung Galaxy S22',
         osVersion: process.env.BS_OS_ANDROID || '12.0',
         projectName: 'qa-mobile-appium',
-        buildName: process.env.BS_BUILD || 'android-local-build',
+        buildName: process.env.BS_BUILD || 'android-browserstack',
         sessionName: 'Android Appium - Suite',
         debug: true,
         networkLogs: true,

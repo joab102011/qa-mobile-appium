@@ -7,7 +7,10 @@ const { dado, quando, entao } = require('../utilitarios/passos.bdd');
 describe('Mensagens de erro', () => {
   it('MOB-10 | deve validar divergencia de senhas no cadastro', async () => {
     await dado('que estou na tela de cadastro', async () => {
+      await inicioPagina.fecharAlertaSeExistir();
       await inicioPagina.irParaLogin();
+      await cadastroPagina.abrirAbaCadastro();
+      expect(await cadastroPagina.campoRepetirSenha.isDisplayed()).to.equal(true);
     });
 
     await quando('informo senha e confirmacao diferentes e submeto', async () => {
@@ -19,9 +22,19 @@ describe('Mensagens de erro', () => {
     });
 
     await entao('vejo erro de senhas divergentes e nao ha alerta de sucesso', async () => {
+      await browser.waitUntil(
+        async () => {
+          const mensagem = await $('//*[@text="Please enter the same password"]');
+          return (
+            (await mensagem.isDisplayed().catch(() => false)) ||
+            (await cadastroPagina.campoRepetirSenha.isDisplayed().catch(() => false))
+          );
+        },
+        { timeout: 8000, timeoutMsg: 'Sem feedback de senhas divergentes' },
+      );
       const mensagem = await $('//*[@text="Please enter the same password"]');
       const visivel = await mensagem.isDisplayed().catch(() => false);
-      const aindaNoCadastro = await cadastroPagina.campoRepetirSenha.isDisplayed();
+      const aindaNoCadastro = await cadastroPagina.campoRepetirSenha.isDisplayed().catch(() => false);
       expect(visivel || aindaNoCadastro).to.equal(true);
 
       const sucesso = await loginPagina.alertaSucesso.isDisplayed().catch(() => false);
