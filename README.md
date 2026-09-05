@@ -99,6 +99,21 @@ npm run testar:android:login
 | Todas as specs | `npm run testar:android:local` |
 | Uma spec | `npm run testar:android:login` (etc.) |
 
+### Vídeos da última execução local
+
+Ao final de **cada teste**, o Appium grava a tela e salva um MP4 em:
+
+`capturas/videos-ultima-execucao/`
+
+- Rodando **uma** spec (`npm run testar:android:login`): a pasta é limpa e ficam só os vídeos dessa execução.  
+- Rodando a **suite** (`npm run testar:android:local`): limpa no início e acumula o vídeo de todos os cenários daquela rodada.  
+- Também anexado ao Allure (quando gerar relatório).
+
+```bash
+# apos os testes
+explorer capturas\videos-ultima-execucao
+```
+
 ---
 
 ## 4) BrowserStack (opcional / nuvem)
@@ -138,7 +153,9 @@ qa-mobile-appium/
 ├── scripts/
 │   ├── criar-emulador-projeto.js
 │   ├── iniciar-emulador-projeto.js
+│   ├── rodar-suite-local.js
 │   └── baixar-app.js
+├── capturas/videos-ultima-execucao/  # MP4 da ultima execucao local
 ├── wdio.android.local.conf.js
 └── ...
 ```
