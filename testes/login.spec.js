@@ -11,7 +11,10 @@ describe('Login', () => {
   });
 
   beforeEach(async () => {
+    await loginPagina.fecharAlertaSeExistir();
+    await loginPagina.esconderTeclado();
     await inicioPagina.irParaLogin();
+    await loginPagina.abrirAbaLogin();
   });
 
   it('MOB-01 | deve realizar login com credenciais validas', async () => {
@@ -41,29 +44,41 @@ describe('Login', () => {
       expect(await loginPagina.campoEmail.isDisplayed()).to.equal(true);
     });
 
-    await quando('informo senha invalida e submeto o login', async () => {
+    await quando('informo senha curta/invalida e submeto o login', async () => {
+      // Demo app valida tamanho minimo; senha curta dispara mensagem de erro
       await loginPagina.realizarLogin(usuario.email, usuario.senha);
     });
 
-    await entao('permaneco na tela de login sem sucesso de autenticacao', async () => {
+    await entao('vejo mensagem de senha invalida e nao abro alerta de sucesso', async () => {
+      await browser.pause(800);
       const erroSenha = await loginPagina.mensagemErroSenha.isDisplayed().catch(() => false);
-      const alerta = await loginPagina.alertaSucesso.isDisplayed().catch(() => false);
-      expect(erroSenha || !alerta || true).to.equal(true);
-      expect(await loginPagina.campoEmail.isDisplayed()).to.equal(true);
+      const erroGenerico = await $('android=new UiSelector().textContains("Please enter")')
+        .isDisplayed()
+        .catch(() => false);
+      const alertaVisivel = await loginPagina.alertaSucesso.isDisplayed().catch(() => false);
+      expect(erroSenha || erroGenerico).to.equal(true);
+      expect(alertaVisivel).to.equal(false);
     });
   });
 
   it('MOB-09 | deve validar campos obrigatorios vazios no login', async () => {
     await dado('que estou na aba de Login sem preencher campos', async () => {
-      await loginPagina.abrirAbaLogin();
+      expect(await loginPagina.campoEmail.isDisplayed()).to.equal(true);
     });
 
-    await quando('toco no botao LOGIN', async () => {
+    await quando('toco no botao LOGIN com campos vazios', async () => {
       await loginPagina.tocar(loginPagina.botaoLogin);
     });
 
-    await entao('a tela de login permanece visivel para correcao', async () => {
-      expect(await loginPagina.campoEmail.isDisplayed()).to.equal(true);
+    await entao('permaneco na tela de login sem alerta de sucesso', async () => {
+      await browser.pause(500);
+      const alertaVisivel = await loginPagina.alertaSucesso.isDisplayed().catch(() => false);
+      const emailVisivel = await loginPagina.campoEmail.isDisplayed().catch(() => false);
+      const erroEmail = await $('//*[@text="Please enter a valid email address"]')
+        .isDisplayed()
+        .catch(() => false);
+      expect(alertaVisivel).to.equal(false);
+      expect(emailVisivel || erroEmail).to.equal(true);
     });
   });
 });

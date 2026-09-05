@@ -21,12 +21,12 @@ class LoginPagina extends PaginaBase {
     return $('~button-login-container');
   }
 
-  get mensagemErroEmail() {
-    return $('~error-message-email');
+  get mensagemErroSenha() {
+    return $('android=new UiSelector().textContains("password")');
   }
 
-  get mensagemErroSenha() {
-    return $('//*[@text="Please enter a valid password"]');
+  get mensagemErroEmail() {
+    return $('android=new UiSelector().textContains("email")');
   }
 
   get alertaSucesso() {
@@ -45,8 +45,14 @@ class LoginPagina extends PaginaBase {
 
   async realizarLogin(email, senha) {
     await this.abrirAbaLogin();
-    await this.preencher(this.campoEmail, email);
-    await this.preencher(this.campoSenha, senha);
+    await this.aguardarExibir(this.campoEmail);
+    await this.campoEmail.click();
+    await this.campoEmail.clearValue();
+    await this.campoEmail.setValue(email);
+    await this.campoSenha.click();
+    await this.campoSenha.clearValue();
+    await this.campoSenha.setValue(senha);
+    await this.esconderTeclado();
     await this.tocar(this.botaoLogin);
   }
 
@@ -56,8 +62,27 @@ class LoginPagina extends PaginaBase {
   }
 
   async fecharAlerta() {
-    if (await this.botaoOkAlerta.isDisplayed()) {
+    if (await this.botaoOkAlerta.isDisplayed().catch(() => false)) {
       await this.tocar(this.botaoOkAlerta);
+    }
+  }
+
+  async fecharAlertaSeExistir() {
+    try {
+      if (await this.alertaSucesso.isDisplayed().catch(() => false)) {
+        await this.fecharAlerta();
+        await browser.pause(400);
+      }
+    } catch (e) {
+      // sem alerta aberto
+    }
+  }
+
+  async esconderTeclado() {
+    try {
+      await driver.hideKeyboard();
+    } catch (e) {
+      await driver.back().catch(() => undefined);
     }
   }
 }

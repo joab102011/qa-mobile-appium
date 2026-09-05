@@ -6,8 +6,8 @@ const { dado, quando, entao } = require('../utilitarios/passos.bdd');
 
 describe('Navegacao', () => {
   it('MOB-07 | deve navegar entre abas Inicio, Formularios e Swipe', async () => {
-    await dado('que o aplicativo esta aberto na navegacao inferior', async () => {
-      expect(await inicioPagina.abaInicio.isDisplayed()).to.equal(true);
+    await dado('que o menu inferior do aplicativo esta disponivel', async () => {
+      await inicioPagina.aguardarMenuInferior();
     });
 
     await quando('navego pelas abas Inicio, Formularios e Swipe', async () => {
@@ -18,7 +18,7 @@ describe('Navegacao', () => {
 
     await entao('a tela Swipe fica visivel', async () => {
       expect(await swipePagina.telaEstaVisivel()).to.equal(true);
-      expect(await inicioPagina.abaFormularios.isDisplayed()).to.equal(true);
+      expect(await inicioPagina.abaSwipe.isDisplayed()).to.equal(true);
     });
   });
 

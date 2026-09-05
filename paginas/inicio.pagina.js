@@ -25,23 +25,41 @@ class InicioPagina extends PaginaBase {
     return $('~Drag');
   }
 
+  async aguardarMenuInferior(tempoMs = 20000) {
+    await browser.waitUntil(
+      async () =>
+        (await this.abaInicio.isDisplayed().catch(() => false)) ||
+        (await this.abaLogin.isDisplayed().catch(() => false)) ||
+        (await this.abaFormularios.isDisplayed().catch(() => false)),
+      {
+        timeout: tempoMs,
+        timeoutMsg: 'Menu inferior do demo app nao ficou visivel',
+      },
+    );
+  }
+
   async irParaLogin() {
+    await this.aguardarMenuInferior();
     await this.tocar(this.abaLogin);
   }
 
   async irParaFormularios() {
+    await this.aguardarMenuInferior();
     await this.tocar(this.abaFormularios);
   }
 
   async irParaSwipe() {
+    await this.aguardarMenuInferior();
     await this.tocar(this.abaSwipe);
   }
 
   async irParaWebview() {
+    await this.aguardarMenuInferior();
     await this.tocar(this.abaWebview);
   }
 
   async irParaInicio() {
+    await this.aguardarMenuInferior();
     await this.tocar(this.abaInicio);
   }
 }

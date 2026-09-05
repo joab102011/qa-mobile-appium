@@ -8,12 +8,12 @@
   {
     "cenario": "senha_invalida",
     "email": "bob@example.com",
-    "senha": "senha_errada",
+    "senha": "123",
     "esperado": "erro"
   },
   {
     "cenario": "email_invalido",
-    "email": "naoexiste@qa.com",
+    "email": "naoexiste",
     "senha": "bobspassword",
     "esperado": "erro"
   }
