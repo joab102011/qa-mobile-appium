@@ -41,6 +41,10 @@ testes (Mocha/Chai)
 2. **BrowserStack Android:** hub `hub.browserstack.com` + `BROWSERSTACK_*`
 3. **BrowserStack iOS:** config pronta; execução depende do plano/upload do `.zip` de simulador
 
+## Padrao DADO / QUANDO / ENTAO
+
+Cada cenario nas specs usa `dado()`, `quando()` e `entao()` (`utilitarios/passos.bdd.js`) com steps no Allure — mesmo padrao BDD da suite de API e dos desafios anteriores.
+
 ## CI/CD
 
 - Job principal: `testar_android_browserstack` (quando secrets existirem)
