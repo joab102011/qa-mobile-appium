@@ -2,14 +2,9 @@ const { expect } = require('chai');
 const inicioPagina = require('../paginas/inicio.pagina');
 const loginPagina = require('../paginas/login.pagina');
 const usuarios = require('../dados/usuarios-login.json');
-const { adicionarAmbiente } = require('../utilitarios/allure.ajuda');
 const { dado, quando, entao } = require('../utilitarios/passos.bdd');
 
 describe('Login', () => {
-  before(async () => {
-    adicionarAmbiente({ plataforma: 'Android' });
-  });
-
   beforeEach(async () => {
     await loginPagina.fecharAlertaSeExistir();
     await loginPagina.esconderTeclado();

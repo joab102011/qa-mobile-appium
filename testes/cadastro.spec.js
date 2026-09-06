@@ -2,6 +2,7 @@ const { expect } = require('chai');
 const inicioPagina = require('../paginas/inicio.pagina');
 const cadastroPagina = require('../paginas/cadastro.pagina');
 const { dado, quando, entao } = require('../utilitarios/passos.bdd');
+const usuarios = require('../dados/usuarios-login.json');
 
 describe('Cadastro', () => {
   beforeEach(async () => {
@@ -31,12 +32,15 @@ describe('Cadastro', () => {
   });
 
   it('MOB-04 | deve exibir erro ao cadastrar com email invalido', async () => {
-    await dado('que informarei um email em formato invalido', async () => {
-      expect('email-invalido').to.not.include('@');
+    const usuario = usuarios.find((u) => u.cenario === 'email_invalido');
+
+    await dado('que informarei um email em formato invalido do arquivo de dados', async () => {
+      expect(usuario).to.exist;
+      expect(usuario.email).to.not.include('@');
     });
 
     await quando('submeto o cadastro com esse email', async () => {
-      await cadastroPagina.realizarCadastro('email-invalido', 'Senha@123', 'Senha@123');
+      await cadastroPagina.realizarCadastro(usuario.email, 'Senha@123', 'Senha@123');
     });
 
     await entao('vejo a mensagem de e-mail invalido e nao ha alerta de sucesso', async () => {
