@@ -29,9 +29,20 @@ exports.config = {
     timeout: 180000,
   },
   /**
-   * Garante app em primeiro plano no inicio de cada arquivo de spec.
+   * Garante app em primeiro plano no inicio de cada arquivo de spec
+   * e registra ambiente no Allure (todas as suites).
    */
   before: async function () {
+    const { adicionarAmbiente } = require('./utilitarios/allure.ajuda');
+    adicionarAmbiente({
+      plataforma: process.env.PLATFORM || 'Android',
+      dispositivo:
+        process.env.UDID_ANDROID ||
+        process.env.NOME_DISPOSITIVO_ANDROID ||
+        process.env.BS_DEVICE_ANDROID ||
+        'WdioDemo_API34',
+      build: process.env.BS_BUILD || 'local',
+    });
     try {
       await driver.activateApp('com.wdiodemoapp');
     } catch (e) {

@@ -75,6 +75,41 @@ exports.config = {
   },
 
   onPrepare() {
+    if (!udidProjeto) {
+      throw new Error(
+        '[erro] UDID do emulador do projeto ausente. Rode `npm run emulador:iniciar` ' +
+          '(grava emulador/udid-ativo.txt) ou defina UDID_ANDROID=emulator-5560. ' +
+          'Isso evita conectar em AVD de outro projeto.',
+      );
+    }
+    // Health-check leve: confirma que o UDID ainda aparece no adb
+    try {
+      const { execSync } = require('child_process');
+      const sdk =
+        process.env.ANDROID_HOME ||
+        process.env.ANDROID_SDK_ROOT ||
+        'D:\\Android\\Sdk';
+      const adb = require('path').join(sdk, 'platform-tools', 'adb.exe');
+      const lista = execSync(`"${adb}" devices`, {
+        encoding: 'utf8',
+        windowsHide: true,
+        timeout: 15_000,
+      });
+      if (!lista.includes(udidProjeto)) {
+        throw new Error(
+          `[health-check] UDID ${udidProjeto} nao esta online no adb. Suba o emulador do projeto.`,
+        );
+      }
+      console.log(`[health-check] dispositivo ${udidProjeto} online`);
+    } catch (e) {
+      if (e && e.message && e.message.includes('[health-check]')) {
+        throw e;
+      }
+      console.warn(
+        '[health-check] nao foi possivel validar adb (seguindo com UDID configurado):',
+        e.message || e,
+      );
+    }
     if (process.env.MANTER_VIDEOS !== '1') {
       limparVideosUltimaExecucao();
       console.log('[gravacao] pasta capturas/videos-ultima-execucao limpa (nova execucao local)');
