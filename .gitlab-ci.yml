@@ -11,6 +11,7 @@
 #       - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 #
 # Local gratis: emulador WdioDemo_API34 porta 5560 + npm run testar:android:local
+# Runner: NAO cria AVD — so npm ci + baixar APK (AVD e so local).
 # Espelho GitHub: .github/workflows/ci.yml
 # =============================================================================
 
@@ -33,7 +34,8 @@ smoke_android_browserstack:
       - .npm/
       - node_modules/
   before_script:
-    - npm run preparar
+    - npm ci
+    - node scripts/baixar-app.js
   script:
     - npm run testar:android:bs:smoke
   artifacts:
@@ -61,7 +63,8 @@ testar_android_browserstack:
       - node_modules/
   before_script:
     - node -v && npm -v
-    - npm run preparar
+    - npm ci
+    - node scripts/baixar-app.js
   script:
     - npm run testar:android:bs
   artifacts:

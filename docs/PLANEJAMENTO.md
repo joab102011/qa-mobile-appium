@@ -23,9 +23,19 @@ testes → paginas → WDIO → Appium → emulador WdioDemo_API34 (pasta do rep
 ## Ambientes
 
 1. **Local (oficial grátis):** `npm run preparar` → `npm run emulador:iniciar` → `npm run testar:android:local`  
-   Emulador exclusivo: **`WdioDemo_API34`** em `emulador/avd` (não usa AVD de outros projetos).
+   Emulador exclusivo: **`WdioDemo_API34`** porta **5560** (não usa AVD de outros projetos).  
+   O WDIO **falha no onPrepare** se não houver `udid-ativo.txt` / `UDID_ANDROID` (evita AVD alheio).
 2. **BrowserStack (opcional/pago):** secrets `BROWSERSTACK_*` + `npm run testar:android:bs`
-3. **CI:** YAMLs inativos; job BrowserStack auto-suficiente com Node 20
+3. **CI:** YAMLs inativos por padrão; jobs usam `npm ci` + `baixar-app` (**sem** criar AVD no runner)
+
+## Política de flake (local)
+
+| Medida | Motivo |
+|--------|--------|
+| Um spec por processo (`rodar-suite-local.js`) | Mais estável em um único emulador |
+| UDID obrigatório do projeto | Não pega AVD alheio por omissão |
+| Health-check adb no onPrepare | Fail-fast se o emulador caiu |
+| Vídeo + screenshot em falha | Diagnóstico sem re-rodar às cegas |
 
 ## Padrao DADO / QUANDO / ENTAO
 

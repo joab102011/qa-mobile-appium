@@ -6,8 +6,9 @@
 #   2) Descomente push / pull_request em "on:"
 #   3) Remova "if: false" dos jobs
 #
-# Camadas: smoke BrowserStack → suite completa (opcional no mesmo job grep)
-# Local gratis (sem CI): npm run emulador:iniciar && npm run testar:android:local
+# Camadas: smoke BrowserStack → suite completa
+# Runner cloud: NAO cria AVD — so `npm ci` + download do APK.
+# Local gratis: npm run emulador:iniciar && npm run testar:android:local
 #   Emulador deste repo: WdioDemo_API34 na porta 5560 (nao usa AVD de outros projetos)
 # Espelho GitLab: .gitlab-ci.yml
 # =============================================================================
@@ -32,8 +33,10 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-      - name: Preparar projeto (deps + APK)
-        run: npm run preparar
+      - name: Instalar deps e baixar APK (sem criar AVD no runner)
+        run: |
+          npm ci
+          node scripts/baixar-app.js
       - name: Smoke (@smoke) no BrowserStack
         run: npm run testar:android:bs:smoke
         env:
@@ -60,8 +63,10 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-      - name: Preparar projeto (deps + APK)
-        run: npm run preparar
+      - name: Instalar deps e baixar APK (sem criar AVD no runner)
+        run: |
+          npm ci
+          node scripts/baixar-app.js
       - name: Regressao Android no BrowserStack
         run: npm run testar:android:bs
         env:
