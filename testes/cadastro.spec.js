@@ -9,7 +9,7 @@ describe('Cadastro', () => {
     await inicioPagina.irParaLogin();
   });
 
-  it('MOB-03 | deve cadastrar usuario com dados validos', async () => {
+  it('MOB-03 | deve cadastrar usuario com dados validos @smoke', async () => {
     const sufixo = Date.now();
     const email = `qa_${sufixo}@mail.com`;
     const senha = 'Senha@123';
@@ -39,11 +39,20 @@ describe('Cadastro', () => {
       await cadastroPagina.realizarCadastro('email-invalido', 'Senha@123', 'Senha@123');
     });
 
-    await entao('permaneco no formulario sem alerta de sucesso', async () => {
+    await entao('vejo a mensagem de e-mail invalido e nao ha alerta de sucesso', async () => {
+      await browser.waitUntil(
+        async () => {
+          const mensagem = await $('//*[@text="Please enter a valid email address"]');
+          return mensagem.isDisplayed().catch(() => false);
+        },
+        { timeout: 8000, timeoutMsg: 'Mensagem de e-mail invalido nao apareceu' },
+      );
       const mensagem = await $('//*[@text="Please enter a valid email address"]');
-      const visivel = await mensagem.isDisplayed().catch(() => false);
-      const aindaNaTela = await cadastroPagina.campoEmail.isDisplayed();
-      expect(visivel || aindaNaTela).to.equal(true);
+      expect(await mensagem.isDisplayed()).to.equal(true);
+      const sucesso = await $('//*[@resource-id="android:id/alertTitle"]')
+        .isDisplayed()
+        .catch(() => false);
+      expect(sucesso, 'nao deve abrir alerta de sucesso com e-mail invalido').to.equal(false);
     });
   });
 });

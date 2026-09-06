@@ -25,20 +25,15 @@ describe('Mensagens de erro', () => {
       await browser.waitUntil(
         async () => {
           const mensagem = await $('//*[@text="Please enter the same password"]');
-          return (
-            (await mensagem.isDisplayed().catch(() => false)) ||
-            (await cadastroPagina.campoRepetirSenha.isDisplayed().catch(() => false))
-          );
+          return mensagem.isDisplayed().catch(() => false);
         },
-        { timeout: 8000, timeoutMsg: 'Sem feedback de senhas divergentes' },
+        { timeout: 8000, timeoutMsg: 'Mensagem "Please enter the same password" nao apareceu' },
       );
       const mensagem = await $('//*[@text="Please enter the same password"]');
-      const visivel = await mensagem.isDisplayed().catch(() => false);
-      const aindaNoCadastro = await cadastroPagina.campoRepetirSenha.isDisplayed().catch(() => false);
-      expect(visivel || aindaNoCadastro).to.equal(true);
+      expect(await mensagem.isDisplayed()).to.equal(true);
 
       const sucesso = await loginPagina.alertaSucesso.isDisplayed().catch(() => false);
-      expect(sucesso).to.equal(false);
+      expect(sucesso, 'nao deve abrir alerta de sucesso com senhas divergentes').to.equal(false);
     });
   });
 });

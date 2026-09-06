@@ -1,21 +1,57 @@
 # =============================================================================
-# GitLab CI — INATIVO por padrao
+# GitLab CI — INATIVO por padrao (quality gate pronto para ligar)
 # =============================================================================
-# Pipeline auto-suficiente: imagem Node 20 + npm run preparar + BrowserStack.
-# Sem Android Studio, sem emulador no runner. Secrets: BROWSERSTACK_*.
-# Espelho: .github/workflows/ci.yml | Ativar: trocar workflow.rules (README).
+# COMO ATIVAR:
+#   1) Variables CI/CD: BROWSERSTACK_USERNAME, BROWSERSTACK_ACCESS_KEY, BROWSERSTACK_APP_ID
+#   2) Troque workflow.rules por:
+#
+#   workflow:
+#     rules:
+#       - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+#       - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+#
+# Local gratis: emulador WdioDemo_API34 porta 5560 + npm run testar:android:local
+# Espelho GitHub: .github/workflows/ci.yml
 # =============================================================================
 
 workflow:
   rules:
-    - when: never # CI inativo — troque por rules de branch/MR ao ativar
+    - when: never # CI inativo — substitua pelas rules do comentario acima
 
 stages:
+  - smoke
   - testar
+
+smoke_android_browserstack:
+  image: node:20
+  stage: smoke
+  variables:
+    npm_config_cache: "$CI_PROJECT_DIR/.npm"
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - .npm/
+      - node_modules/
+  before_script:
+    - npm run preparar
+  script:
+    - npm run testar:android:bs:smoke
+  artifacts:
+    when: always
+    paths:
+      - allure-results/
+      - capturas/
+    expire_in: 7 days
+  rules:
+    - if: $BROWSERSTACK_USERNAME
+      when: on_success
+    - when: manual
+      allow_failure: true
 
 testar_android_browserstack:
   image: node:20
   stage: testar
+  needs: ["smoke_android_browserstack"]
   variables:
     npm_config_cache: "$CI_PROJECT_DIR/.npm"
   cache:

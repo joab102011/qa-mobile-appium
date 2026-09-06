@@ -9,8 +9,7 @@ const {
 
 /**
  * Emulador LOCAL exclusivo deste projeto: WdioDemo_API34
- * (criado em emulador/avd via npm run emulador:criar)
- * Não usa AVD de outros projetos.
+ * Porta padrão 5560 (ver emulador/udid-ativo.txt após npm run emulador:iniciar).
  *
  * Gravacao: ao final de cada teste salva MP4 em
  * capturas/videos-ultima-execucao/ (ultima execucao local).
@@ -34,9 +33,9 @@ const capacidade = {
   'appium:noReset': false,
   'appium:fullReset': false,
   'appium:autoLaunch': true,
-  'appium:adbExecTimeout': 90000,
-  'appium:uiautomator2ServerLaunchTimeout': 90000,
-  'appium:uiautomator2ServerInstallTimeout': 90000,
+  'appium:adbExecTimeout': 120000,
+  'appium:uiautomator2ServerLaunchTimeout': 120000,
+  'appium:uiautomator2ServerInstallTimeout': 120000,
   'appium:appWaitDuration': 90000,
 };
 
@@ -48,26 +47,33 @@ if (udidProjeto) {
   capacidade['appium:udid'] = udidProjeto;
 }
 
+/** Appium externo (npx appium): defina APPIUM_EXTERNO=1 e services vazios. */
+const appiumExterno = process.env.APPIUM_EXTERNO === '1';
+
 exports.config = {
   ...compartilhado,
   port: 4723,
-  services: [
-    [
-      'appium',
-      {
-        args: {
-          relaxedSecurity: true,
-        },
-        command: 'appium',
-      },
-    ],
-  ],
+  services: appiumExterno
+    ? []
+    : [
+        [
+          'appium',
+          {
+            args: { relaxedSecurity: true },
+            command: 'appium',
+            appiumStartTimeout: 120000,
+          },
+        ],
+      ],
   capabilities: [capacidade],
 
-  /**
-   * Limpa videos da pasta "ultima execucao", exceto quando a suite sequencial
-   * pediu para manter (varias specs no mesmo ciclo).
-   */
+  mochaOpts: {
+    ...((compartilhado.mochaOpts) || {}),
+    ui: 'bdd',
+    timeout: 180000,
+    ...(process.env.MOCHA_GREP ? { grep: process.env.MOCHA_GREP } : {}),
+  },
+
   onPrepare() {
     if (process.env.MANTER_VIDEOS !== '1') {
       limparVideosUltimaExecucao();

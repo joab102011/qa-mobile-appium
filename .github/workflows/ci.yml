@@ -1,23 +1,30 @@
 # =============================================================================
-# GitHub Actions — INATIVO por padrao
+# GitHub Actions — INATIVO por padrao (quality gate pronto para ligar)
 # =============================================================================
-# Pipeline auto-suficiente: setup-node 20 + npm run preparar + BrowserStack.
-# Sem Android Studio, sem emulador no runner. Secrets: BROWSERSTACK_*.
-# Espelho: .gitlab-ci.yml | Ativar: descomentar push/PR e remover if: false.
+# COMO ATIVAR (3 passos):
+#   1) Cadastre secrets: BROWSERSTACK_USERNAME, BROWSERSTACK_ACCESS_KEY, BROWSERSTACK_APP_ID
+#   2) Descomente push / pull_request em "on:"
+#   3) Remova "if: false" dos jobs
+#
+# Camadas: smoke BrowserStack → suite completa (opcional no mesmo job grep)
+# Local gratis (sem CI): npm run emulador:iniciar && npm run testar:android:local
+#   Emulador deste repo: WdioDemo_API34 na porta 5560 (nao usa AVD de outros projetos)
+# Espelho GitLab: .gitlab-ci.yml
 # =============================================================================
 
 name: CI Mobile Appium
 
 on:
   workflow_dispatch:
+  # --- ATIVAR: descomente ---
   # push:
   #   branches: [main]
   # pull_request:
   #   branches: [main]
 
 jobs:
-  testar_android_browserstack:
-    if: false # CI inativo — remova esta linha ao ativar
+  smoke_android_browserstack:
+    if: false # ATIVAR: remova esta linha
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +34,35 @@ jobs:
           cache: npm
       - name: Preparar projeto (deps + APK)
         run: npm run preparar
-      - name: Executar suite Android no BrowserStack
+      - name: Smoke (@smoke) no BrowserStack
+        run: npm run testar:android:bs:smoke
+        env:
+          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+          BROWSERSTACK_APP_ID: ${{ secrets.BROWSERSTACK_APP_ID }}
+      - name: Artefatos smoke
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorios-mobile-smoke
+          path: |
+            allure-results/
+            capturas/
+          retention-days: 7
+
+  testar_android_browserstack:
+    if: false # ATIVAR: remova esta linha
+    needs: [smoke_android_browserstack]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Preparar projeto (deps + APK)
+        run: npm run preparar
+      - name: Regressao Android no BrowserStack
         run: npm run testar:android:bs
         env:
           BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}

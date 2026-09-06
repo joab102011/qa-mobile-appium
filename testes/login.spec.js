@@ -23,7 +23,7 @@ describe('Login', () => {
     await loginPagina.limparCampos();
   });
 
-  it('MOB-01 | deve realizar login com credenciais validas', async () => {
+  it('MOB-01 | deve realizar login com credenciais validas @smoke', async () => {
     const usuario = usuarios.find((u) => u.cenario === 'login_valido');
     let titulo = '';
 
@@ -78,16 +78,15 @@ describe('Login', () => {
       await loginPagina.tocar(loginPagina.botaoLogin);
     });
 
-    await entao('vejo validacao e permaneco sem alerta de sucesso', async () => {
+    await entao('vejo mensagem de validacao e nao abro alerta de sucesso', async () => {
       await browser.waitUntil(
         async () => (await loginPagina.houveErroValidacao()) || (await loginPagina.alertaVisivel()),
         { timeout: 8000, timeoutMsg: 'Sem feedback apos login com campos vazios' },
       );
       const alertaVisivel = await loginPagina.alertaVisivel();
       const erro = await loginPagina.houveErroValidacao();
-      const emailVisivel = await loginPagina.campoEmail.isDisplayed().catch(() => false);
       expect(alertaVisivel, 'nao deve abrir alerta de sucesso com campos vazios').to.equal(false);
-      expect(erro || emailVisivel).to.equal(true);
+      expect(erro, 'esperava mensagem de validacao (Please enter / email / senha)').to.equal(true);
     });
   });
 });
