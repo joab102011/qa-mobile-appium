@@ -3,7 +3,7 @@
 # =============================================================================
 # Camadas:
 #   1) verificar_projeto — sempre (npm ci + APK + configs; SEM criar AVD)
-#   2) smoke / regressao BrowserStack — so com secrets BROWSERSTACK_*
+#   2) smoke / regressao BrowserStack — steps so rodam com secrets BROWSERSTACK_*
 #
 # Evidencia dos 10 cenarios E2E: emulador local WdioDemo_API34 porta 5560
 #   npm run emulador:iniciar && npm run testar:android:local
@@ -37,26 +37,41 @@ jobs:
 
   smoke_android_browserstack:
     needs: [verificar_projeto]
-    if: ${{ secrets.BROWSERSTACK_USERNAME != '' && secrets.BROWSERSTACK_ACCESS_KEY != '' && secrets.BROWSERSTACK_APP_ID != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Detectar credenciais BrowserStack
+        id: bs
+        env:
+          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+          BROWSERSTACK_APP_ID: ${{ secrets.BROWSERSTACK_APP_ID }}
+        run: |
+          if [ -n "$BROWSERSTACK_USERNAME" ] && [ -n "$BROWSERSTACK_ACCESS_KEY" ] && [ -n "$BROWSERSTACK_APP_ID" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "BrowserStack ausente — smoke na nuvem ignorado (esperado sem secrets)."
+          fi
       - uses: actions/setup-node@v4
+        if: steps.bs.outputs.enabled == 'true'
         with:
           node-version: "20"
           cache: npm
       - name: Instalar deps e baixar APK (sem criar AVD no runner)
+        if: steps.bs.outputs.enabled == 'true'
         run: |
           npm ci
           node scripts/baixar-app.js
       - name: Smoke (@smoke) no BrowserStack
+        if: steps.bs.outputs.enabled == 'true'
         run: npm run testar:android:bs:smoke
         env:
           BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
           BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
           BROWSERSTACK_APP_ID: ${{ secrets.BROWSERSTACK_APP_ID }}
       - name: Artefatos smoke
-        if: always()
+        if: always() && steps.bs.outputs.enabled == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: relatorios-mobile-smoke
@@ -67,26 +82,41 @@ jobs:
 
   testar_android_browserstack:
     needs: [smoke_android_browserstack]
-    if: ${{ secrets.BROWSERSTACK_USERNAME != '' && secrets.BROWSERSTACK_ACCESS_KEY != '' && secrets.BROWSERSTACK_APP_ID != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Detectar credenciais BrowserStack
+        id: bs
+        env:
+          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+          BROWSERSTACK_APP_ID: ${{ secrets.BROWSERSTACK_APP_ID }}
+        run: |
+          if [ -n "$BROWSERSTACK_USERNAME" ] && [ -n "$BROWSERSTACK_ACCESS_KEY" ] && [ -n "$BROWSERSTACK_APP_ID" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "BrowserStack ausente — regressao na nuvem ignorada (esperado sem secrets)."
+          fi
       - uses: actions/setup-node@v4
+        if: steps.bs.outputs.enabled == 'true'
         with:
           node-version: "20"
           cache: npm
       - name: Instalar deps e baixar APK (sem criar AVD no runner)
+        if: steps.bs.outputs.enabled == 'true'
         run: |
           npm ci
           node scripts/baixar-app.js
       - name: Regressao Android no BrowserStack
+        if: steps.bs.outputs.enabled == 'true'
         run: npm run testar:android:bs
         env:
           BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
           BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
           BROWSERSTACK_APP_ID: ${{ secrets.BROWSERSTACK_APP_ID }}
       - name: Publicar artefatos
-        if: always()
+        if: always() && steps.bs.outputs.enabled == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: relatorios-mobile
