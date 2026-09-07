@@ -1,31 +1,45 @@
 # =============================================================================
-# GitLab CI — INATIVO por padrao (quality gate pronto para ligar)
+# GitLab CI — ATIVO (pipeline hibrida; espelho do GitHub Actions)
 # =============================================================================
-# COMO ATIVAR:
-#   1) Variables CI/CD: BROWSERSTACK_USERNAME, BROWSERSTACK_ACCESS_KEY, BROWSERSTACK_APP_ID
-#   2) Troque workflow.rules por:
+# Camadas:
+#   1) verificar_projeto — sempre (sem criar AVD)
+#   2) smoke / regressao BrowserStack — so com BROWSERSTACK_USERNAME
 #
-#   workflow:
-#     rules:
-#       - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-#       - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-#
-# Local gratis: emulador WdioDemo_API34 porta 5560 + npm run testar:android:local
-# Runner: NAO cria AVD — so npm ci + baixar APK (AVD e so local).
+# Local: npm run emulador:iniciar && npm run testar:android:local
 # Espelho GitHub: .github/workflows/ci.yml
 # =============================================================================
 
 workflow:
   rules:
-    - when: never # CI inativo — substitua pelas rules do comentario acima
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "web"
 
 stages:
+  - verificar
   - smoke
   - testar
+
+verificar_projeto:
+  image: node:20
+  stage: verificar
+  variables:
+    npm_config_cache: "$CI_PROJECT_DIR/.npm"
+    UDID_ANDROID: "emulator-5560"
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - .npm/
+      - node_modules/
+  before_script:
+    - npm ci
+  script:
+    - npm run verificar:ci
 
 smoke_android_browserstack:
   image: node:20
   stage: smoke
+  needs: ["verificar_projeto"]
   variables:
     npm_config_cache: "$CI_PROJECT_DIR/.npm"
   cache:
@@ -45,10 +59,9 @@ smoke_android_browserstack:
       - capturas/
     expire_in: 7 days
   rules:
-    - if: $BROWSERSTACK_USERNAME
+    - if: $BROWSERSTACK_USERNAME && $BROWSERSTACK_ACCESS_KEY && $BROWSERSTACK_APP_ID
       when: on_success
-    - when: manual
-      allow_failure: true
+    - when: never
 
 testar_android_browserstack:
   image: node:20
@@ -74,7 +87,6 @@ testar_android_browserstack:
       - capturas/
     expire_in: 7 days
   rules:
-    - if: $BROWSERSTACK_USERNAME
+    - if: $BROWSERSTACK_USERNAME && $BROWSERSTACK_ACCESS_KEY && $BROWSERSTACK_APP_ID
       when: on_success
-    - when: manual
-      allow_failure: true
+    - when: never

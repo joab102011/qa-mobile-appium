@@ -1,15 +1,12 @@
 # =============================================================================
-# GitHub Actions — INATIVO por padrao (quality gate pronto para ligar)
+# GitHub Actions — ATIVO (pipeline hibrida)
 # =============================================================================
-# COMO ATIVAR (3 passos):
-#   1) Cadastre secrets: BROWSERSTACK_USERNAME, BROWSERSTACK_ACCESS_KEY, BROWSERSTACK_APP_ID
-#   2) Descomente push / pull_request em "on:"
-#   3) Remova "if: false" dos jobs
+# Camadas:
+#   1) verificar_projeto — sempre (npm ci + APK + configs; SEM criar AVD)
+#   2) smoke / regressao BrowserStack — so com secrets BROWSERSTACK_*
 #
-# Camadas: smoke BrowserStack → suite completa
-# Runner cloud: NAO cria AVD — so `npm ci` + download do APK.
-# Local gratis: npm run emulador:iniciar && npm run testar:android:local
-#   Emulador deste repo: WdioDemo_API34 na porta 5560 (nao usa AVD de outros projetos)
+# Evidencia dos 10 cenarios E2E: emulador local WdioDemo_API34 porta 5560
+#   npm run emulador:iniciar && npm run testar:android:local
 # Espelho GitLab: .gitlab-ci.yml
 # =============================================================================
 
@@ -17,15 +14,30 @@ name: CI Mobile Appium
 
 on:
   workflow_dispatch:
-  # --- ATIVAR: descomente ---
-  # push:
-  #   branches: [main]
-  # pull_request:
-  #   branches: [main]
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
+  verificar_projeto:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Instalar dependencias
+        run: npm ci
+      - name: Gate de integridade (APK + configs WDIO)
+        run: npm run verificar:ci
+        env:
+          UDID_ANDROID: emulator-5560
+
   smoke_android_browserstack:
-    if: false # ATIVAR: remova esta linha
+    needs: [verificar_projeto]
+    if: ${{ secrets.BROWSERSTACK_USERNAME != '' && secrets.BROWSERSTACK_ACCESS_KEY != '' && secrets.BROWSERSTACK_APP_ID != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -54,8 +66,8 @@ jobs:
           retention-days: 7
 
   testar_android_browserstack:
-    if: false # ATIVAR: remova esta linha
     needs: [smoke_android_browserstack]
+    if: ${{ secrets.BROWSERSTACK_USERNAME != '' && secrets.BROWSERSTACK_ACCESS_KEY != '' && secrets.BROWSERSTACK_APP_ID != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

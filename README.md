@@ -7,7 +7,7 @@ Automação de testes **mobile nativos** com **Appium 2** + **WebdriverIO** + Mo
 Fluxo **gratuito e local**: Node.js + SDK Android + emulador **`WdioDemo_API34`** (pasta `emulador/avd`), na **porta 5560** (`emulator-5560`) para **não conflitar** com AVDs de outros projetos na 5554.  
 **Não usa AVD de outros projetos.** BrowserStack é opcional (nuvem, em geral pago/trial).
 
-Os YAMLs de CI (GitLab + GitHub, **inativos**) usam BrowserStack quando ativados — sem emulador no runner.
+CI **ativa** (modelo híbrido): gate de integridade em todo push/PR; testes BrowserStack só com secrets. A suite E2E dos 10 cenários roda no emulador local — ver `docs/PLANEJAMENTO.md`.
 
 ## Stack
 
@@ -18,7 +18,7 @@ Os YAMLs de CI (GitLab + GitHub, **inativos**) usam BrowserStack quando ativados
 | Testes | Mocha + Chai |
 | Emulador local | **`WdioDemo_API34`** (deste projeto, em `emulador/avd`) |
 | Cloud (opcional) | BrowserStack |
-| CI/CD | GitLab CI + GitHub Actions (prontos, **inativos**) |
+| CI/CD | GitLab CI + GitHub Actions (**ativos**, gate + BrowserStack condicional) |
 
 ---
 
@@ -129,31 +129,32 @@ npm run testar:android:bs
 
 ---
 
-## 5) CI (GitLab + GitHub Actions) — inativos
+## 5) CI (GitLab + GitHub Actions) — ativos (híbrido)
 
-Pipelines com **smoke → regressão** + artefatos Allure/`capturas`.  
-**Inativos** por padrão — texto de ativação abaixo.
+Pipeline com **gate de integridade sempre** + **smoke/regressão BrowserStack só com secrets**.  
+O runner **não cria AVD**. Racional completo: [`docs/PLANEJAMENTO.md`](docs/PLANEJAMENTO.md) (seção *Decisão de CI na entrega*).
 
 | Arquivo | Plataforma |
 |---------|------------|
 | [`.gitlab-ci.yml`](.gitlab-ci.yml) | GitLab |
 | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | GitHub Actions |
 
-### Como ativar
+### Camadas da esteira
 
-**GitHub Actions**
+| Camada | Quando roda | Comando / job |
+|--------|-------------|----------------|
+| Gate (`verificar_projeto`) | Todo push/PR em `main` | `npm run verificar:ci` — APK + configs WDIO + specs |
+| Smoke BrowserStack | Só com secrets `BROWSERSTACK_*` | `npm run testar:android:bs:smoke` |
+| Regressão BrowserStack | Após smoke, com secrets | `npm run testar:android:bs` |
 
-1. Secrets: `BROWSERSTACK_USERNAME`, `BROWSERSTACK_ACCESS_KEY`, `BROWSERSTACK_APP_ID`
-2. Em `.github/workflows/ci.yml`: descomente `push`/`pull_request` e remova `if: false`
-3. Push/PR → jobs `smoke_android_browserstack` e `testar_android_browserstack`
+### BrowserStack na nuvem (opcional)
 
-**GitLab CI**
+1. Secrets (GitHub) ou Variables (GitLab): `BROWSERSTACK_USERNAME`, `BROWSERSTACK_ACCESS_KEY`, `BROWSERSTACK_APP_ID`
+2. Push/PR → gate sempre; em seguida jobs BS se as credenciais existirem
 
-1. Variables CI/CD com os mesmos `BROWSERSTACK_*`
-2. Troque `workflow.rules: when: never` por rules de MR/`main` (comentário no topo do YAML)
-3. Push/MR dispara smoke e depois a suite completa
+Sem secrets, a pipeline fica **verde no gate** — isso é esperado. A prova dos 10 cenários continua sendo a execução local.
 
-### Camadas locais (sem nuvem)
+### Camadas locais (evidência E2E)
 
 | Camada | Comando |
 |--------|---------|
@@ -171,7 +172,7 @@ Pipelines com **smoke → regressão** + artefatos Allure/`capturas`.
 | Data-driven | JSON de login | MOB-01, MOB-02 |
 | Android + iOS | Android local (porta **5560**); iOS via BrowserStack | configs `wdio.*` |
 | Screenshot em falha + Allure | Hook compartilhado + vídeos MP4 locais | `capturas/` |
-| GitLab CI a cada commit/MR | YAML pronto (smoke → full); ativar com secrets BS | `.gitlab-ci.yml` |
+| GitLab CI / GitHub Actions | Gate ativo em todo commit; BrowserStack condicional; E2E no emulador local | `.gitlab-ci.yml`, `.github/workflows/ci.yml` |
 
 ---
 

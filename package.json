@@ -21,6 +21,7 @@
     "testar:android:bs:login": "wdio run wdio.android.browserstack.conf.js --spec ./testes/login.spec.js",
     "testar:ios:bs": "wdio run wdio.ios.browserstack.conf.js",
     "baixar:app": "node scripts/baixar-app.js",
+    "verificar:ci": "node scripts/verificar-ci.js",
     "relatorio:allure": "allure generate allure-results --clean -o allure-report && allure open allure-report"
   },
   "keywords": [
