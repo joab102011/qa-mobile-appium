@@ -31,11 +31,12 @@ jobs:
           node-version: "20"
           cache: npm
       - name: Instalar dependencias
-        run: npm ci
+        run: npm install --no-audit --no-fund
       - name: Gate de integridade (APK + configs WDIO)
         run: npm run verificar:ci
         env:
           UDID_ANDROID: emulator-5560
+          VERIFICAR_CI_ANDROID_ONLY: "1"
 
   smoke_android_browserstack:
     needs: [verificar_projeto]
@@ -63,8 +64,8 @@ jobs:
       - name: Instalar deps e baixar APK (sem criar AVD no runner)
         if: steps.bs.outputs.enabled == 'true'
         run: |
-          npm ci
-          node scripts/baixar-app.js
+          npm install --no-audit --no-fund
+          node scripts/baixar-app.js --android-only
       - name: Smoke (@smoke) no BrowserStack
         if: steps.bs.outputs.enabled == 'true'
         run: npm run testar:android:bs:smoke
@@ -108,8 +109,8 @@ jobs:
       - name: Instalar deps e baixar APK (sem criar AVD no runner)
         if: steps.bs.outputs.enabled == 'true'
         run: |
-          npm ci
-          node scripts/baixar-app.js
+          npm install --no-audit --no-fund
+          node scripts/baixar-app.js --android-only
       - name: Regressao Android no BrowserStack
         if: steps.bs.outputs.enabled == 'true'
         run: npm run testar:android:bs

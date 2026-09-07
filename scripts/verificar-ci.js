@@ -2,6 +2,8 @@
 /**
  * Gate de integridade para CI (sem emulador / sem BrowserStack).
  * Prova: apps baixaveis, configs WDIO, specs — nao prova UI.
+ *
+ * VERIFICAR_CI_ANDROID_ONLY=1 — so APK (mais rapido no runner Linux)
  */
 const fs = require('fs');
 const path = require('path');
@@ -9,6 +11,7 @@ const { execSync } = require('child_process');
 
 const raiz = path.join(__dirname, '..');
 process.chdir(raiz);
+const soAndroidOnly = process.env.VERIFICAR_CI_ANDROID_ONLY === '1';
 
 function ok(msg) {
   console.log(`[verificar:ci] OK — ${msg}`);
@@ -19,8 +22,17 @@ function falhar(msg) {
   process.exit(1);
 }
 
-console.log('[verificar:ci] baixando apps Android + iOS (simulador)...');
-execSync('node scripts/baixar-app.js', { stdio: 'inherit' });
+console.log(
+  soAndroidOnly
+    ? '[verificar:ci] baixando APK Android...'
+    : '[verificar:ci] baixando apps Android + iOS (Simulator)...',
+);
+execSync(
+  soAndroidOnly
+    ? 'node scripts/baixar-app.js --android-only'
+    : 'node scripts/baixar-app.js',
+  { stdio: 'inherit' },
+);
 
 const apk = path.join(raiz, 'apps', 'android.wdio.native.app.apk');
 if (!fs.existsSync(apk) || fs.statSync(apk).size < 1000) {
@@ -29,10 +41,14 @@ if (!fs.existsSync(apk) || fs.statSync(apk).size < 1000) {
 ok(`APK Android presente (${fs.statSync(apk).size} bytes)`);
 
 const appIos = path.join(raiz, 'apps', 'ios.simulator.wdio.native.app.app');
-if (!fs.existsSync(appIos)) {
-  falhar(`App iOS (Simulator) ausente apos extracao: ${appIos}`);
+if (!soAndroidOnly) {
+  if (!fs.existsSync(appIos)) {
+    falhar(`App iOS (Simulator) ausente apos extracao: ${appIos}`);
+  }
+  ok('App iOS Simulator presente em apps/');
+} else {
+  ok('download iOS pulado (VERIFICAR_CI_ANDROID_ONLY=1)');
 }
-ok('App iOS Simulator presente em apps/');
 
 const scriptsCheck = [
   'scripts/baixar-app.js',

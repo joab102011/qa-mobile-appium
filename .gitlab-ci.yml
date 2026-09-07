@@ -34,7 +34,7 @@ verificar_projeto:
       - .npm/
       - node_modules/
   before_script:
-    - npm ci
+    - npm install --no-audit --no-fund
   script:
     - npm run verificar:ci
 
@@ -50,8 +50,8 @@ smoke_android_browserstack:
       - .npm/
       - node_modules/
   before_script:
-    - npm ci
-    - node scripts/baixar-app.js
+    - npm install --no-audit --no-fund
+    - node scripts/baixar-app.js --android-only
   script:
     - npm run testar:android:bs:smoke
   artifacts:
@@ -78,8 +78,8 @@ testar_android_browserstack:
       - node_modules/
   before_script:
     - node -v && npm -v
-    - npm ci
-    - node scripts/baixar-app.js
+    - npm install --no-audit --no-fund
+    - node scripts/baixar-app.js --android-only
   script:
     - npm run testar:android:bs
   artifacts:
