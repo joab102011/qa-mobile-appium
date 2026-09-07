@@ -1,10 +1,10 @@
 /**
- * Roda cada spec em processo WDIO separado (mais estavel em 1 emulador).
- * Uso: node scripts/rodar-suite-local.js
- *      node scripts/rodar-suite-local.js --smoke
+ * Roda cada spec em processo WDIO separado (mais estavel em 1 dispositivo).
  *
- * Limpa videos uma vez no inicio e mantem todos os MP4 da suite em
- * capturas/videos-ultima-execucao/.
+ *   node scripts/rodar-suite-local.js              # Android
+ *   node scripts/rodar-suite-local.js --smoke       # Android smoke
+ *   node scripts/rodar-suite-local.js --ios         # iOS (macOS)
+ *   node scripts/rodar-suite-local.js --ios --smoke
  */
 const { spawnSync } = require('child_process');
 const path = require('path');
@@ -12,6 +12,17 @@ const { limparVideosUltimaExecucao } = require('../utilitarios/gravacao.tela');
 
 const raiz = path.join(__dirname, '..');
 const soSmoke = process.argv.includes('--smoke');
+const soIos = process.argv.includes('--ios');
+
+if (soIos && process.platform !== 'darwin') {
+  console.error(
+    '[erro] Suite iOS local so roda em macOS + Xcode. Use Android local ou `npm run testar:ios:bs`.',
+  );
+  process.exit(1);
+}
+
+const conf = soIos ? 'wdio.ios.local.conf.js' : 'wdio.android.local.conf.js';
+const plataforma = soIos ? 'iOS' : 'Android';
 
 const specs = soSmoke
   ? ['login.spec.js', 'cadastro.spec.js', 'navegacao.spec.js']
@@ -25,23 +36,22 @@ const specs = soSmoke
 
 limparVideosUltimaExecucao();
 console.log(
-  soSmoke
-    ? '[gravacao] smoke (@smoke) — videos limpos; gravando execucao local'
-    : '[gravacao] videos da execucao anterior removidos; gravando nova suite local',
+  `[suite-local] plataforma=${plataforma} conf=${conf} modo=${soSmoke ? 'smoke' : 'regressao'}`,
 );
 
 const resultados = [];
 const envFilho = {
   ...process.env,
   MANTER_VIDEOS: '1',
+  PLATFORM: plataforma,
   ...(soSmoke ? { MOCHA_GREP: '@smoke' } : {}),
 };
 
 for (const spec of specs) {
-  console.log(`\n======== RODANDO ${spec}${soSmoke ? ' (smoke)' : ''} ========\n`);
+  console.log(`\n======== ${plataforma} · ${spec}${soSmoke ? ' (smoke)' : ''} ========\n`);
   const r = spawnSync(
     'npx',
-    ['wdio', 'run', 'wdio.android.local.conf.js', '--spec', `./testes/${spec}`],
+    ['wdio', 'run', conf, '--spec', `./testes/${spec}`],
     {
       cwd: raiz,
       stdio: 'inherit',
@@ -67,7 +77,7 @@ for (const item of resultados) {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${item.spec}`);
 }
 
-const pastaVideos = path.join(raiz, 'capturas', 'videos-ultima-execucao');
-console.log(`\nVideos da ultima execucao local: ${pastaVideos}`);
-
+console.log(
+  `\nVideos: ${path.join(raiz, 'capturas', 'videos-ultima-execucao')}`,
+);
 process.exit(falhas > 0 ? 1 : 0);

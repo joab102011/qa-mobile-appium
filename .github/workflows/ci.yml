@@ -2,11 +2,13 @@
 # GitHub Actions — ATIVO (pipeline hibrida)
 # =============================================================================
 # Camadas:
-#   1) verificar_projeto — sempre (npm ci + APK + configs; SEM criar AVD)
-#   2) smoke / regressao BrowserStack — steps so rodam com secrets BROWSERSTACK_*
+#   1) verificar_projeto — sempre: npm run verificar:ci (APK + app iOS + configs; SEM AVD)
+#   2) smoke / regressao BrowserStack — steps so com secrets BROWSERSTACK_*
 #
-# Evidencia dos 10 cenarios E2E: emulador local WdioDemo_API34 porta 5560
-#   npm run emulador:iniciar && npm run testar:android:local
+# E2E local (fora do runner):
+#   Android: npm run emulador:iniciar && npm run testar:android:local
+#   iOS Mac: open -a Simulator && npm run testar:ios:local
+# Comandos: docs/COMANDOS.md | Racional: docs/PLANEJAMENTO.md
 # Espelho GitLab: .gitlab-ci.yml
 # =============================================================================
 

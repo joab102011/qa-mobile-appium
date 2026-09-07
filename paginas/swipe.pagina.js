@@ -1,4 +1,5 @@
 const PaginaBase = require('./pagina.base');
+const { ehIos } = require('../utilitarios/seletores');
 
 class SwipePagina extends PaginaBase {
   get telaSwipe() {
@@ -17,15 +18,17 @@ class SwipePagina extends PaginaBase {
     return this.telaSwipe.isDisplayed();
   }
 
-  /**
-   * Texto principal visível no carrossel (para assertar mudança após gesto).
-   */
   async textoCartaoVisivel() {
-    const candidatos = [
-      $('android=new UiSelector().resourceIdMatches(".*slideTextContainer.*")'),
-      $('~slideTextContainer'),
-      $('android=new UiSelector().className("android.widget.TextView").instance(1)'),
-    ];
+    const candidatos = ehIos()
+      ? [
+          $('~slideTextContainer'),
+          $('-ios class chain:**/XCUIElementTypeStaticText'),
+        ]
+      : [
+          $('android=new UiSelector().resourceIdMatches(".*slideTextContainer.*")'),
+          $('~slideTextContainer'),
+          $('android=new UiSelector().className("android.widget.TextView").instance(1)'),
+        ];
     for (const el of candidatos) {
       try {
         if (await el.isDisplayed()) {
@@ -35,18 +38,21 @@ class SwipePagina extends PaginaBase {
           }
         }
       } catch (e) {
-        // tenta proximo seletor
+        // tenta proximo
       }
     }
-    const textos = await $$('//*[@content-desc="Swipe-screen"]//android.widget.TextView');
-    const partes = [];
-    for (const t of textos) {
-      const txt = (await t.getText().catch(() => '')).trim();
-      if (txt) {
-        partes.push(txt);
+    if (!ehIos()) {
+      const textos = await $$('//*[@content-desc="Swipe-screen"]//android.widget.TextView');
+      const partes = [];
+      for (const t of textos) {
+        const txt = (await t.getText().catch(() => '')).trim();
+        if (txt) {
+          partes.push(txt);
+        }
       }
+      return partes.join(' | ');
     }
-    return partes.join(' | ');
+    return '';
   }
 }
 

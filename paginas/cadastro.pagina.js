@@ -1,4 +1,8 @@
 const PaginaBase = require('./pagina.base');
+const {
+  tituloAlerta,
+  botaoOkAlerta: seletorBotaoOk,
+} = require('../utilitarios/seletores');
 
 class CadastroPagina extends PaginaBase {
   get abaCadastro() {
@@ -22,20 +26,17 @@ class CadastroPagina extends PaginaBase {
   }
 
   get alertaTitulo() {
-    return $('//*[@resource-id="android:id/alertTitle"]');
+    return tituloAlerta();
   }
 
   get botaoOkAlerta() {
-    return $('//*[@resource-id="android:id/button1"]');
+    return seletorBotaoOk();
   }
 
   async formularioCadastroVisivel() {
     return this.campoRepetirSenha.isDisplayed().catch(() => false);
   }
 
-  /**
-   * Abre a aba Sign up sem travar 15s se o formulario ja estiver aberto.
-   */
   async abrirAbaCadastro() {
     if (await this.formularioCadastroVisivel()) {
       return;
@@ -46,7 +47,7 @@ class CadastroPagina extends PaginaBase {
         await aba.waitForDisplayed({ timeout: 8000 });
         await aba.click();
       } catch (e) {
-        // tenta seguir se o campo ja estiver visivel
+        // segue
       }
     }
     await this.aguardarExibir(this.campoRepetirSenha, 12000);

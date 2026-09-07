@@ -1,17 +1,30 @@
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 /**
- * Baixa o APK do native-demo-app (release pública WebdriverIO).
- * Ajuste a URL se a versão mudar: https://github.com/webdriverio/native-demo-app/releases
+ * Baixa APK Android + ZIP iOS (simulador) do native-demo-app.
+ * Releases: https://github.com/webdriverio/native-demo-app/releases
+ *
+ * Flags:
+ *   --android-only | --ios-only
  */
+const soAndroid = process.argv.includes('--android-only');
+const soIos = process.argv.includes('--ios-only');
+
 const urlApk =
   process.env.URL_APK_DEMO ||
   'https://github.com/webdriverio/native-demo-app/releases/download/v1.0.8/android.wdio.native.app.v1.0.8.apk';
 
+const urlIosZip =
+  process.env.URL_IOS_DEMO ||
+  'https://github.com/webdriverio/native-demo-app/releases/download/v1.0.8/ios.simulator.wdio.native.app.v1.0.8.zip';
+
 const pastaApps = path.join(process.cwd(), 'apps');
-const destino = path.join(pastaApps, 'android.wdio.native.app.apk');
+const destinoApk = path.join(pastaApps, 'android.wdio.native.app.apk');
+const destinoZip = path.join(pastaApps, 'ios.simulator.wdio.native.app.zip');
+const destinoAppCanonico = path.join(pastaApps, 'ios.simulator.wdio.native.app.app');
 
 if (!fs.existsSync(pastaApps)) {
   fs.mkdirSync(pastaApps, { recursive: true });
@@ -25,14 +38,14 @@ function baixar(url, arquivo) {
         return;
       }
       if (resposta.statusCode !== 200) {
-        rejeitar(new Error(`Falha ao baixar APK: HTTP ${resposta.statusCode}`));
+        rejeitar(new Error(`Falha ao baixar: HTTP ${resposta.statusCode} (${url})`));
         return;
       }
       const fluxo = fs.createWriteStream(arquivo);
       resposta.pipe(fluxo);
       fluxo.on('finish', () => {
         fluxo.close();
-        console.log(`APK salvo em ${arquivo}`);
+        console.log(`Salvo: ${arquivo}`);
         resolver();
       });
     });
@@ -40,7 +53,74 @@ function baixar(url, arquivo) {
   });
 }
 
-baixar(urlApk, destino).catch((erro) => {
-  console.error(erro.message);
+function acharApp(dirRaiz) {
+  const fila = [dirRaiz];
+  while (fila.length) {
+    const dir = fila.pop();
+    let nomes;
+    try {
+      nomes = fs.readdirSync(dir);
+    } catch (e) {
+      continue;
+    }
+    for (const nome of nomes) {
+      const cheio = path.join(dir, nome);
+      let st;
+      try {
+        st = fs.statSync(cheio);
+      } catch (e) {
+        continue;
+      }
+      if (st.isDirectory()) {
+        if (nome.endsWith('.app')) {
+          return cheio;
+        }
+        fila.push(cheio);
+      }
+    }
+  }
+  return null;
+}
+
+function extrairIos(zipPath) {
+  const pastaTemp = path.join(pastaApps, '_ios_extract');
+  fs.rmSync(pastaTemp, { recursive: true, force: true });
+  fs.mkdirSync(pastaTemp, { recursive: true });
+
+  if (process.platform === 'win32') {
+    execSync(
+      `powershell -NoProfile -Command "Expand-Archive -LiteralPath '${zipPath.replace(/'/g, "''")}' -DestinationPath '${pastaTemp.replace(/'/g, "''")}' -Force"`,
+      { stdio: 'inherit' },
+    );
+  } else {
+    execSync(`unzip -o "${zipPath}" -d "${pastaTemp}"`, { stdio: 'inherit' });
+  }
+
+  const encontrado = acharApp(pastaTemp);
+  if (!encontrado) {
+    throw new Error('ZIP iOS baixado, mas nenhum .app encontrado apos extracao');
+  }
+
+  fs.rmSync(destinoAppCanonico, { recursive: true, force: true });
+  fs.renameSync(encontrado, destinoAppCanonico);
+  fs.rmSync(pastaTemp, { recursive: true, force: true });
+  console.log(`App iOS (Simulator) pronto: ${destinoAppCanonico}`);
+}
+
+async function main() {
+  const fazerAndroid = soIos ? false : true;
+  const fazerIos = soAndroid ? false : true;
+
+  if (fazerAndroid) {
+    await baixar(urlApk, destinoApk);
+  }
+  if (fazerIos) {
+    await baixar(urlIosZip, destinoZip);
+    extrairIos(destinoZip);
+  }
+}
+
+main().catch((erro) => {
+  console.error(erro.message || erro);
   process.exit(1);
 });

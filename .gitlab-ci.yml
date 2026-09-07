@@ -2,10 +2,12 @@
 # GitLab CI — ATIVO (pipeline hibrida; espelho do GitHub Actions)
 # =============================================================================
 # Camadas:
-#   1) verificar_projeto — sempre (sem criar AVD)
-#   2) smoke / regressao BrowserStack — so com BROWSERSTACK_USERNAME
+#   1) verificar_projeto — sempre: npm run verificar:ci (sem AVD)
+#   2) smoke / regressao BrowserStack — so com BROWSERSTACK_*
 #
-# Local: npm run emulador:iniciar && npm run testar:android:local
+# E2E local: docs/COMANDOS.md
+#   Android: npm run emulador:iniciar && npm run testar:android:local
+#   iOS Mac: open -a Simulator && npm run testar:ios:local
 # Espelho GitHub: .github/workflows/ci.yml
 # =============================================================================
 

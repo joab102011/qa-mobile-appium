@@ -1,4 +1,9 @@
 const PaginaBase = require('./pagina.base');
+const {
+  tituloAlerta,
+  botaoOkAlerta: seletorBotaoOk,
+  textoContem,
+} = require('../utilitarios/seletores');
 
 class LoginPagina extends PaginaBase {
   get telaLogin() {
@@ -22,33 +27,29 @@ class LoginPagina extends PaginaBase {
   }
 
   get mensagemErroSenha() {
-    return $('android=new UiSelector().textContains("at least 8 characters")');
+    return textoContem('at least 8 characters');
   }
 
   get mensagemErroEmail() {
-    return $('android=new UiSelector().textContains("valid email")');
+    return textoContem('valid email');
   }
 
   get mensagemErroGenerica() {
-    return $('android=new UiSelector().textContains("Please enter")');
+    return textoContem('Please enter');
   }
 
   get alertaSucesso() {
-    return $('//*[@resource-id="android:id/alertTitle"]');
+    return tituloAlerta();
   }
 
   get botaoOkAlerta() {
-    return $('//*[@resource-id="android:id/button1"]');
+    return seletorBotaoOk();
   }
 
   async formularioVisivel() {
     return this.campoEmail.isDisplayed().catch(() => false);
   }
 
-  /**
-   * Garante a aba Login do formulario. Nao espera 15s se o form ja estiver aberto
-   * (apos alerta de sucesso o ~button-login-container pode nao aparecer).
-   */
   async abrirAbaLogin() {
     if (await this.formularioVisivel()) {
       return;
@@ -59,7 +60,7 @@ class LoginPagina extends PaginaBase {
         await aba.waitForDisplayed({ timeout: 5000 });
         await aba.click();
       } catch (e) {
-        // segue: talvez o form ja esteja acessivel
+        // segue
       }
     }
     await this.aguardarExibir(this.campoEmail, 10000);

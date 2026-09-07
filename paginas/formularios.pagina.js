@@ -1,4 +1,9 @@
 const PaginaBase = require('./pagina.base');
+const {
+  tituloAlerta,
+  botaoOkAlerta: seletorBotaoOk,
+  opcaoPorTexto,
+} = require('../utilitarios/seletores');
 
 class FormulariosPagina extends PaginaBase {
   get telaFormularios() {
@@ -34,11 +39,11 @@ class FormulariosPagina extends PaginaBase {
   }
 
   get alertaTitulo() {
-    return $('//*[@resource-id="android:id/alertTitle"]');
+    return tituloAlerta();
   }
 
   get botaoOkAlerta() {
-    return $('//*[@resource-id="android:id/button1"]');
+    return seletorBotaoOk();
   }
 
   async preencherFormulario(texto) {
@@ -54,8 +59,7 @@ class FormulariosPagina extends PaginaBase {
   }
 
   async selecionarOpcaoDropdown(textoOpcao) {
-    const opcao = $(`//*[@text="${textoOpcao}"]`);
-    await this.tocar(opcao);
+    await this.tocar(opcaoPorTexto(textoOpcao));
   }
 
   async ativarBotao() {

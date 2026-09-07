@@ -34,17 +34,25 @@ exports.config = {
    */
   before: async function () {
     const { adicionarAmbiente } = require('./utilitarios/allure.ajuda');
+    const plataforma = process.env.PLATFORM || 'Android';
+    const bundle =
+      process.env.BUNDLE_ID_APP ||
+      process.env.BUNDLE_ID_IOS ||
+      'com.wdiodemoapp';
     adicionarAmbiente({
-      plataforma: process.env.PLATFORM || 'Android',
+      plataforma,
       dispositivo:
         process.env.UDID_ANDROID ||
+        process.env.UDID_IOS ||
         process.env.NOME_DISPOSITIVO_ANDROID ||
+        process.env.NOME_DISPOSITIVO_IOS ||
         process.env.BS_DEVICE_ANDROID ||
-        'WdioDemo_API34',
+        process.env.BS_DEVICE_IOS ||
+        (plataforma === 'iOS' ? 'iPhone Simulator' : 'WdioDemo_API34'),
       build: process.env.BS_BUILD || 'local',
     });
     try {
-      await driver.activateApp('com.wdiodemoapp');
+      await driver.activateApp(bundle);
     } catch (e) {
       // app pode ja estar ativo
     }
