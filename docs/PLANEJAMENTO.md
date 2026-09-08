@@ -2,114 +2,86 @@
 
 ## Objetivo
 
-Entregar o case de **Automação de Testes Mobile** com cobertura rastreável (10 cenários no native-demo-app), Page Object, Appium 2, evidências úteis para diagnóstico (screenshot, Allure, vídeo local) e uma esteira de CI que **sinalize qualidade de forma honesta** — sem confundir “pipeline verde” com “app validado na UI”.
+Suite mobile no native-demo-app: 10 cenários, Page Object, Appium 2, evidências (screenshot, Allure, vídeo local) e CI híbrida — gate estrutural sempre; UI real no emulador local (ou BrowserStack com secrets).
 
-## Decisão de stack
+## Stack
 
 | Camada | Escolha | Motivo |
 |--------|---------|--------|
-| Motor | **Appium 2** + UiAutomator2 (+ XCUITest no Mac) | Exigência do desafio; padrão de mercado para nativo |
-| Cliente/runner | WebdriverIO + Mocha + Chai | Stack do enunciado; specs legíveis com DADO/QUANDO/ENTÃO |
-| Emulador Android | **`WdioDemo_API34` em `emulador/avd`** | Ambiente **controlado**; porta **5560** evita colisão com AVDs alheios |
-| Simulator iOS | Xcode (somente macOS) | Mesma suite; app oficial só para Simulator (limitação Apple) |
-| Cloud (opcional) | BrowserStack | Extensão de cobertura; não substitui o caminho local |
-| CI | GitLab + GitHub Actions (**ativos**, híbrido) | Gate sempre; UI na nuvem só com credencial |
-
-Arquitetura local:
+| Motor | **Appium 2** + UiAutomator2 (+ XCUITest no Mac) | Exigência do desafio |
+| Cliente/runner | WebdriverIO + Mocha + Chai | Stack do enunciado; DADO/QUANDO/ENTÃO |
+| Emulador Android | **`WdioDemo_API34` em `emulador/avd`** | Porta **5560** pra não misturar com outros AVDs |
+| Simulator iOS | Xcode (macOS) | Mesma suite; app oficial só pro Simulator |
+| Cloud (opcional) | BrowserStack | Extensão; não substitui o local |
+| CI | GitLab + GitHub Actions (híbrido) | Gate sempre; UI na nuvem só com credencial |
 
 ```
-testes → paginas (seletores multiplataforma) → WDIO → Appium
-                                              ├─ Android: WdioDemo_API34 (:5560)
-                                              └─ iOS:     Xcode Simulator (macOS)
+testes → paginas → WDIO → Appium
+                    ├─ Android: WdioDemo_API34 (:5560)
+                    └─ iOS:     Xcode Simulator (macOS)
 ```
 
-Comandos operacionais: [`COMANDOS.md`](COMANDOS.md).
+Comandos: [`COMANDOS.md`](COMANDOS.md).
 
 ## Ambientes
 
-1. **Android local (evidência E2E padrão):**  
-   `npm run preparar:android` → `npm run emulador:iniciar` → `npm run testar:android:local`  
-   Fail-fast se não houver UDID do projeto (`udid-ativo.txt` / `UDID_ANDROID`).
-2. **iOS local (macOS):**  
-   `npm run preparar:ios` → Simulator aberto → `npm run testar:ios:local`  
-   Fora de Darwin o comando aborta com erro explícito (evita falsa expectativa no Windows).
-3. **BrowserStack (opcional):** secrets `BROWSERSTACK_*` + `npm run testar:android:bs` / `testar:ios:bs`.
-4. **CI (híbrida):** `npm run verificar:ci` **sempre**; smoke/regressão BS **somente** com secrets. Runner **não** cria AVD nem sobe Simulator.
+1. **Android local:** `npm run preparar:android` → `npm run emulador:iniciar` → `npm run testar:android:local`  
+   Sem UDID do projeto (`udid-ativo.txt` / `UDID_ANDROID`) a suite aborta.
+2. **iOS local (macOS):** `npm run preparar:ios` → Simulator → `npm run testar:ios:local`  
+   Fora de Darwin o comando falha de propósito.
+3. **BrowserStack:** secrets `BROWSERSTACK_*` + `testar:android:bs` / `testar:ios:bs`.
+4. **CI:** `npm run verificar:ci` sempre; smoke/regressão BS só com secrets. Runner não sobe AVD nem Simulator.
 
-## Política de flake (local)
+## Flake (local)
 
 | Medida | Motivo |
 |--------|--------|
-| Um spec por processo (`rodar-suite-local.js`) | Reduz contaminação de sessão em um único dispositivo |
-| UDID obrigatório do projeto (Android) | Isolamento de ambiente |
-| Fail-fast fora de macOS para iOS local | Sinal honesto: iOS Simulator não existe no Windows |
-| Health-check adb no onPrepare | Feedback imediato se o emulador caiu |
-| Vídeo + screenshot em falha | Diagnóstico orientado a evidência |
+| Um spec por processo (`rodar-suite-local.js`) | Evita sessão contaminada no mesmo device |
+| UDID obrigatório (Android) | Isola o AVD do projeto |
+| Fail-fast fora de macOS p/ iOS local | Não fingir que Simulator existe no Windows |
+| Health-check adb no onPrepare | Emulador caiu → feedback imediato |
+| Vídeo + screenshot em falha | Diagnóstico |
 
-## Padrao DADO / QUANDO / ENTAO
+## DADO / QUANDO / ENTÃO
 
-Specs usam `dado()` / `quando()` / `entao()` (`utilitarios/passos.bdd.js`), alinhando intenção do cenário à evidência no Allure.
+Specs usam `dado()` / `quando()` / `entao()` (`utilitarios/passos.bdd.js`) — o Allure herda os steps.
 
----
+## CI na entrega
 
-## Decisão de CI na entrega
+Mobile só fica confiável com app, driver, device, massa e evidência sob controle. A esteira não tenta provar tudo no mesmo job.
 
-### Contexto de qualidade
-
-Em automação mobile, o resultado só é confiável quando estão sob controle, ao mesmo tempo: **o app sob teste**, **o driver (Appium)**, **o dispositivo/emulador**, **a massa** e **a evidência de falha**. Quebrar qualquer um desses elos gera ruído: falha que não é defeito do produto, ou pior — sucesso que não exercitou a UI.
-
-Por isso a esteira deste repositório não tenta “provar tudo no mesmo job”. Ela separa o que a pipeline pode garantir de forma estável do que exige um ambiente de execução mobile real.
-
-### Critérios da decisão
-
-Avaliei as opções (emulador no GitHub Actions, BrowserStack obrigatório, ou CI só documental) sob cinco critérios:
-
-1. **Velocidade do feedback** — o time (ou o avaliador) precisa de sinal rápido no push.
-2. **Confiabilidade do sinal** — verde/vermelho precisa significar a mesma coisa amanhã.
-3. **Alinhamento ao enunciado** — caminho local gratuito é o oficial; BrowserStack é opcional.
-4. **Custo** — minutos de runner, flakiness e assinatura de nuvem.
-5. **Rastreabilidade** — fica claro o que foi validado em CI versus o que foi validado na suite E2E.
-
-### Estratégia adotada (híbrida)
-
-A pirâmide de confiança deste case ficou assim:
+Critérios: feedback rápido, sinal estável, alinhamento ao enunciado (local gratuito; BS opcional), custo e clareza do que CI vs E2E validou.
 
 | Camada | Onde | O que prova |
 |--------|------|-------------|
-| Gate de integridade | GitHub Actions / GitLab (sempre) | `npm ci` + APK + app iOS Simulator + configs WDIO — **pronto para executar** |
-| Regressão UI Android | Emulador **`WdioDemo_API34`** (local) | Os **10 cenários** com evidências |
-| Regressão UI iOS | Xcode Simulator (macOS) ou BrowserStack | Mesma suite; local só onde o SO permite |
-| Extensão de dispositivo | BrowserStack (condicional) | Nuvem **quando** há secrets |
+| Gate | GitHub / GitLab (sempre) | `npm ci` + APK + app iOS Simulator + configs WDIO |
+| UI Android | Emulador `WdioDemo_API34` (local) | 10 cenários com evidências |
+| UI iOS | Simulator (macOS) ou BrowserStack | Mesma suite |
+| Nuvem | BrowserStack (condicional) | Só com secrets |
 
-Na prática: `npm run verificar:ci` no job `verificar_projeto` a cada push/PR. Smoke e regressão BrowserStack só entram se os secrets existirem (detecção em step, sem `secrets` no `if` de job).
+`verificar:ci` roda em todo push/PR. Jobs BS só entram se houver secrets (checagem no step).
 
-### O que foi deliberadamente deixado de fora
+Deixei de fora de propósito:
 
-- **Emulador Android dentro do GitHub Actions.** Sobe o tempo de feedback, aumenta flakiness e dilui o isolamento do AVD na porta 5560.
-- **BrowserStack como gate obrigatório sem secrets.** Gera **falso negativo** (vermelho por credencial, não por regressão).
-- **Job que “passa” sem exercitar o app e se vende como regressão mobile.** Seria **falso positivo** de confiança.
+- Emulador no GitHub Actions (lento, flaky, perde o isolamento da porta 5560).
+- BrowserStack como gate sem secrets (vermelho por credencial, não por bug).
+- Job “verde” que não abre o app e se vende como regressão mobile.
 
-### Como ler o resultado na entrega
-
-- **Actions/GitLab verde no gate** → projeto estruturalmente saudável; esteira viva.
-- **Allure + capturas + vídeos da execução local** → prova dos 10 cenários.
-- **Jobs BrowserStack condicionais** → porta para nuvem existe; entrega mínima não depende dela.
-
-Em resumo: optei por uma esteira que **não mente sobre o que testou**. Comandos explícitos por plataforma estão em [`COMANDOS.md`](COMANDOS.md).
+Como ler o resultado: gate verde = projeto estruturalmente ok; Allure/capturas/vídeos locais = prova dos 10 cenários; BS condicional = caminho de nuvem existe, entrega mínima não depende dele.
 
 ## CI/CD
 
 | Arquivo | Uso |
 |---------|-----|
-| `.github/workflows/ci.yml` | GitHub Actions — gate sempre; BrowserStack condicional |
-| `.gitlab-ci.yml` | Espelho (enunciado Mobile cita GitLab) |
+| `.github/workflows/ci.yml` | Gate sempre; BrowserStack condicional |
+| `.gitlab-ci.yml` | Espelho (enunciado cita GitLab) |
 
-Ativação BrowserStack: cadastrar secrets/variáveis `BROWSERSTACK_*`. Sem isso, só o gate roda — comportamento esperado.
+Secrets `BROWSERSTACK_*` ligam a nuvem. Sem isso, só o gate — esperado.
 
 ## Evolução
 
 1. Scaffold → Page Objects → 10 cenários → Allure  
-2. Emulador **do projeto** (`WdioDemo_API34`) + scripts de isolamento (porta 5560 / UDID)  
-3. BrowserStack opcional (configs Android/iOS)  
-4. CI híbrida ativa: gate de integridade + nuvem condicional  
-5. iOS local no Mac (`wdio.ios.local.conf.js`) + comandos explícitos em `COMANDOS.md`  
+2. AVD do projeto (`WdioDemo_API34`) + porta 5560 / UDID  
+3. BrowserStack opcional  
+4. CI híbrida (gate + nuvem condicional)  
+5. iOS local no Mac + `COMANDOS.md`
