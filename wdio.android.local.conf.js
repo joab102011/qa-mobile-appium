@@ -33,10 +33,13 @@ const capacidade = {
   'appium:noReset': false,
   'appium:fullReset': false,
   'appium:autoLaunch': true,
-  'appium:adbExecTimeout': 120000,
-  'appium:uiautomator2ServerLaunchTimeout': 120000,
-  'appium:uiautomator2ServerInstallTimeout': 120000,
-  'appium:appWaitDuration': 90000,
+  'appium:adbExecTimeout': 180000,
+  'appium:uiautomator2ServerLaunchTimeout': 300000,
+  'appium:uiautomator2ServerInstallTimeout': 300000,
+  'appium:appWaitDuration': 120000,
+  'appium:settingsAppStartupTimeout': 180000,
+  'appium:androidInstallTimeout': 180000,
+  'appium:disableWindowAnimation': true,
 };
 
 if (process.env.VERSAO_ANDROID) {
@@ -52,6 +55,7 @@ const appiumExterno = process.env.APPIUM_EXTERNO === '1';
 
 exports.config = {
   ...compartilhado,
+  hostname: '127.0.0.1',
   port: 4723,
   services: appiumExterno
     ? []
@@ -61,7 +65,7 @@ exports.config = {
           {
             args: { relaxedSecurity: true },
             command: 'appium',
-            appiumStartTimeout: 120000,
+            appiumStartTimeout: 300000,
           },
         ],
       ],

@@ -10,7 +10,7 @@ exports.config = {
   logLevel: 'warn',
   bail: 0,
   waitforTimeout: 15000,
-  connectionRetryTimeout: 120000,
+  connectionRetryTimeout: 600000,
   connectionRetryCount: 2,
   framework: 'mocha',
   reporters: [
