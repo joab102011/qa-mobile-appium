@@ -25,6 +25,8 @@ emulador/udid-ativo.txt
 emulador/ui-dump.xml
 emulador/emu-*.txt
 emulador/emu-*.log
+emulador/appium-*.log
+emulador/ultimo-boot*.log
 emulador/avd/**/*.img
 emulador/avd/**/*.qcow2
 emulador/avd/**/snapshots/
@@ -48,3 +50,6 @@ emulador/avd/**/quickbootChoice.ini
 emulador/avd/**/version_num.cache
 emulador/avd/**/read-snapshot.txt
 
+apps/*.app/
+apps/ios.simulator*/
+emulador/avd/**/data/
