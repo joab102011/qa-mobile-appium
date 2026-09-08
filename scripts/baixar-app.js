@@ -87,14 +87,8 @@ function extrairIos(zipPath) {
   fs.rmSync(pastaTemp, { recursive: true, force: true });
   fs.mkdirSync(pastaTemp, { recursive: true });
 
-  if (process.platform === 'win32') {
-    execSync(
-      `powershell -NoProfile -Command "Expand-Archive -LiteralPath '${zipPath.replace(/'/g, "''")}' -DestinationPath '${pastaTemp.replace(/'/g, "''")}' -Force"`,
-      { stdio: 'inherit' },
-    );
-  } else {
-    execSync(`unzip -o "${zipPath}" -d "${pastaTemp}"`, { stdio: 'inherit' });
-  }
+  // tar nativo no Windows evita Expand-Archive travar em zips grandes do .app
+  execSync(`tar -xf "${zipPath}" -C "${pastaTemp}"`, { stdio: 'inherit' });
 
   const encontrado = acharApp(pastaTemp);
   if (!encontrado) {
@@ -112,11 +106,23 @@ async function main() {
   const fazerIos = soAndroid ? false : true;
 
   if (fazerAndroid) {
-    await baixar(urlApk, destinoApk);
+    if (fs.existsSync(destinoApk) && fs.statSync(destinoApk).size > 1000) {
+      console.log(`APK ja presente: ${destinoApk}`);
+    } else {
+      await baixar(urlApk, destinoApk);
+    }
   }
   if (fazerIos) {
-    await baixar(urlIosZip, destinoZip);
-    extrairIos(destinoZip);
+    if (fs.existsSync(destinoAppCanonico)) {
+      console.log(`App iOS ja presente: ${destinoAppCanonico}`);
+    } else {
+      if (!(fs.existsSync(destinoZip) && fs.statSync(destinoZip).size > 1000)) {
+        await baixar(urlIosZip, destinoZip);
+      } else {
+        console.log(`ZIP iOS ja presente: ${destinoZip}`);
+      }
+      extrairIos(destinoZip);
+    }
   }
 }
 
