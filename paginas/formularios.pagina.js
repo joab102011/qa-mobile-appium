@@ -34,10 +34,6 @@ class FormulariosPagina extends PaginaBase {
     return $('~button-Active');
   }
 
-  get botaoInativo() {
-    return $('~button-Inactive');
-  }
-
   get alertaTitulo() {
     return tituloAlerta();
   }

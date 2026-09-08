@@ -16,10 +16,6 @@ class InicioPagina extends PaginaBase {
     return $('~Home');
   }
 
-  get abaWebview() {
-    return $('~Webview');
-  }
-
   get abaLogin() {
     return $('~Login');
   }
@@ -30,10 +26,6 @@ class InicioPagina extends PaginaBase {
 
   get abaSwipe() {
     return $('~Swipe');
-  }
-
-  get abaDrag() {
-    return $('~Drag');
   }
 
   get alertaTitulo() {
@@ -144,11 +136,6 @@ class InicioPagina extends PaginaBase {
   async irParaSwipe() {
     await this.aguardarMenuInferior();
     await this.tocar(this.abaSwipe);
-  }
-
-  async irParaWebview() {
-    await this.aguardarMenuInferior();
-    await this.tocar(this.abaWebview);
   }
 
   async irParaInicio() {

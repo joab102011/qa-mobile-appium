@@ -6,10 +6,6 @@ const {
 } = require('../utilitarios/seletores');
 
 class LoginPagina extends PaginaBase {
-  get telaLogin() {
-    return $('~Login-screen');
-  }
-
   get campoEmail() {
     return $('~input-email');
   }
